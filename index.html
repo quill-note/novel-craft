@@ -334,7 +334,7 @@ function formatText(t){
   if(oA==='half')t=t.replace(/[Ａ-Ｚａ-ｚ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
   if(oN==='full')t=t.replace(/[0-9]/g,c=>String.fromCharCode(c.charCodeAt(0)+0xFEE0));
   if(oN==='half')t=t.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
-  if(oS==='full')t=t.replace(/!/g,'！').replace(/\?/g,'？');
+  if(oS==='full'){t=t.replace(/([!?]{2,})/g,m=>'__COMBO__'+m+'__COMBO__');t=t.replace(/!/g,'！').replace(/\?/g,'？');t=t.replace(/__COMBO__(.+?)__COMBO__/g,(m,p)=>p.replace(/！/g,'!').replace(/？/g,'?'));}
   if(oS==='half')t=t.replace(/！/g,'!').replace(/？/g,'?');
   if(document.getElementById('optBracketPeriod').checked)t=t.replace(/。([」』）\]])/g,'$1');
   if(document.getElementById('optLeader').checked){t=t.replace(/…{1,}/g,'……');t=t.replace(/\.{3,}/g,'……');t=t.replace(/—{1,}/g,'——');t=t.replace(/ー{2,}/g,'——');}
