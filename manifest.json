@@ -1,0 +1,16 @@
+{
+  "name": "執筆補助",
+  "short_name": "執筆補助",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fef8f7",
+  "theme_color": "#e87b6b",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
