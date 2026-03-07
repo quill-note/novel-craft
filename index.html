@@ -52,6 +52,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--primary-dark);color:#fff;padding:12px 16px;border-radius:var(--radius-md);font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(201,88,74,.45);transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;opacity:0;z-index:600;pointer-events:none;display:flex;flex-direction:column;gap:8px;width:min(280px,calc(100vw - 32px))}.toast-row{display:flex;align-items:center;gap:8px}.toast .mi{font-size:18px;flex-shrink:0}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
 .mobile-btn{display:none}
 @media(max-width:768px){.editor-layout{grid-template-columns:1fr}.desktop-col{display:none}.mobile-btn{display:inline-flex}.header-inner{flex-direction:column;align-items:flex-start}.tab-nav{padding:8px 16px 0;overflow-x:auto}.tab-btn{padding:8px 14px;font-size:12px;white-space:nowrap}.main{padding:0 16px 32px}.tab-panel{padding:16px}textarea{min-height:300px}.split-settings{flex-direction:column;align-items:stretch}}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(74,37,37,.5);z-index:700;align-items:center;justify-content:center;padding:20px}.confirm-overlay.show{display:flex}.confirm-box{background:var(--surface);border-radius:var(--radius-lg);padding:20px;width:min(320px,calc(100vw - 40px));box-shadow:0 8px 32px var(--shadow)}.confirm-box p{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px}.confirm-preview{font-family:var(--font-mincho);font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:14px;line-height:1.8;max-height:100px;overflow-y:auto;word-break:break-all}.confirm-preview del{color:var(--text3);text-decoration:line-through}.confirm-preview ins{color:var(--primary-dark);text-decoration:none;font-weight:700}.confirm-btns{display:flex;gap:8px}.confirm-btns .btn{flex:1;justify-content:center}
 </style>
 </head>
 <body>
@@ -120,6 +121,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 
 <div class="modal-overlay" id="mOvl" onclick="if(event.target===this)closeMod()"><div class="modal-panel"><div class="modal-header"><h3 id="mTitle"></h3><button class="modal-close" onclick="closeMod()"><span class="mi">close</span></button></div><div id="mCont"></div></div></div>
 <div class="yure-popup" id="yPop" style="display:none"></div>
+<div class="confirm-overlay" id="confOvl"><div class="confirm-box"><p id="confMsg"></p><div class="confirm-preview" id="confPrev"></div><div class="confirm-btns"><button class="btn btn-secondary btn-sm" onclick="confCancel()"><span class="mi mi-xs">close</span>キャンセル</button><button class="btn btn-primary btn-sm" onclick="confOk()"><span class="mi mi-xs">check</span>書き換える</button></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -739,6 +741,21 @@ function cpOut(){navigator.clipboard.writeText(fmt);toast('コピー');}
 
 function eH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function eR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+let _confCallback=null;
+function showConfirm(msg,preview,cb){
+  document.getElementById('confMsg').textContent=msg;
+  document.getElementById('confPrev').innerHTML=preview;
+  _confCallback=cb;
+  document.getElementById('confOvl').classList.add('show');
+}
+function confOk(){
+  document.getElementById('confOvl').classList.remove('show');
+  if(_confCallback){_confCallback();_confCallback=null;}
+}
+function confCancel(){
+  document.getElementById('confOvl').classList.remove('show');
+  _confCallback=null;
+}
 function toast(m,showProofBtn){
   const e=document.getElementById('toast');
   const onProof=document.getElementById('panel-proofread')?.classList.contains('active');
