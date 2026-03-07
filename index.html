@@ -49,7 +49,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 .rule-list{margin-top:8px}.rule-row{display:flex;gap:6px;align-items:center;padding:3px 0}.rule-row .input-text{flex:1;min-width:0}.rule-add{display:flex;gap:6px;align-items:center;margin-top:8px}.rule-add .input-text{flex:1;min-width:0}
 .collapse-toggle{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:12px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0 0 4px;margin-bottom:10px;border-bottom:1px solid var(--primary-pale);width:100%}.collapse-toggle .mi{font-size:14px;transition:transform .2s}.collapse-toggle.open .mi-arrow{transform:rotate(180deg)}.collapse-body{display:none}.collapse-body.open{display:block}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(74,37,37,.35);z-index:500;align-items:flex-end;justify-content:center}.modal-overlay.show{display:flex}.modal-panel{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:20px;animation:slideUp .3s ease}@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.modal-header h3{font-size:15px;font-weight:700;color:var(--primary-dark);display:flex;align-items:center;gap:6px}.modal-close{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:10px 24px;border-radius:24px;font-size:13px;font-weight:500;box-shadow:0 4px 12px var(--shadow);transition:transform .3s ease,opacity .3s ease;opacity:0;z-index:600;pointer-events:none;display:flex;align-items:center;gap:8px}.toast .mi{font-size:16px}.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--primary-dark);color:#fff;padding:12px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(201,88,74,.45);transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;opacity:0;z-index:600;pointer-events:none;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px)}.toast .mi{font-size:18px;flex-shrink:0}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
 .mobile-btn{display:none}
 @media(max-width:768px){.editor-layout{grid-template-columns:1fr}.desktop-col{display:none}.mobile-btn{display:inline-flex}.header-inner{flex-direction:column;align-items:flex-start}.tab-nav{padding:8px 16px 0;overflow-x:auto}.tab-btn{padding:8px 14px;font-size:12px;white-space:nowrap}.main{padding:0 16px 32px}.tab-panel{padding:16px}textarea{min-height:300px}.split-settings{flex-direction:column;align-items:stretch}}
 </style>
@@ -411,12 +411,32 @@ function togSnip(i){
 }
 function hlEl(el){el.style.outline='3px solid var(--primary)';el.style.outlineOffset='2px';setTimeout(()=>{el.style.outline='';el.style.outlineOffset='';},2000);}
 
-// 本文ハイライトタップ → 対応するチェックリスト項目へスクロール
+// 本文ハイライトタップ → 表記ゆれ編集ポップアップを開く
 function sPop(e,el){
   e.stopPropagation();
   const di=+el.dataset.i;
-  const item=document.getElementById('pi-'+di);
-  if(item){item.scrollIntoView({behavior:'smooth',block:'center'});hlEl(item);}
+  const pos=+el.dataset.pos;
+  const word=el.dataset.w||el.textContent;
+  const alt=el.dataset.alt||'';
+
+  const p=document.getElementById('yPop');
+  const src=document.getElementById('srcEditor').value;
+  const ctx='…'+eH(src.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(src.slice(pos+word.length,pos+word.length+12))+'…';
+
+  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
+  html+='<div style="margin-bottom:6px">'
+    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="width:100%;font-size:13px;margin-bottom:6px" placeholder="語句を変更">'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
+    +'</div>';
+  if(alt){
+    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(word)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(alt)+'」に統一</button>';
+    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(alt)+'" data-to="'+eH(word)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(word)+'」に統一</button>';
+  }
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpToPos('+pos+','+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+  p.innerHTML=html;
+  showPop(p,el);
+  setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},80);
 }
 
 // スニペットクリック：編集ポップアップのみ（ジャンプはボタンから）
@@ -550,7 +570,6 @@ function gPop(e,el){
   const src=document.getElementById('srcEditor').value;
   const foundSent=getSrcSentByKeyword(src,fmtSentence,20);
   const srcSentence=foundSent?foundSent.text:fmtSentence.replace(/^　/,'');
-  }
 
   const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
 
@@ -590,22 +609,30 @@ function snipSentEditGobi(origSent){
   if(!to||to===origSent){hPop();return;}
   hPop();
   const s=document.getElementById('srcEditor');
+  // 1) そのまま検索
   let idx=s.value.indexOf(origSent);
-  // 見つからない場合、origSentの末尾キーワードで文を再特定
+  // 2) 字下げ除去して検索
   if(idx<0){
-    const found=getSrcSentByKeyword(s.value,origSent,15);
-    if(found){
-      idx=found.start;
-      const actualSent=found.text;
-      s.value=s.value.slice(0,idx)+to+s.value.slice(idx+actualSent.length);
+    const stripped=origSent.replace(/^[　\s]+/,'');
+    idx=s.value.indexOf(stripped);
+    if(idx>=0){
+      s.value=s.value.slice(0,idx)+to+s.value.slice(idx+stripped.length);
       upPrev();upCt();toast('文を書き換えました',true);runProof();
       return;
     }
-    toast('文の位置が見つかりません');
+  }else{
+    s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
+    upPrev();upCt();toast('文を書き換えました',true);runProof();
     return;
   }
-  s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
-  upPrev();upCt();toast('文を書き換えました',true);runProof();
+  // 3) キーワード末尾15字で再検索（長さを増やして精度アップ）
+  const found=getSrcSentByKeyword(s.value,origSent,15)||getSrcSentByKeyword(s.value,origSent,10)||getSrcSentByKeyword(s.value,origSent,6);
+  if(found){
+    s.value=s.value.slice(0,found.start)+to+s.value.slice(found.start+found.text.length);
+    upPrev();upCt();toast('文を書き換えました',true);runProof();
+    return;
+  }
+  toast('文の位置が見つかりません。チェックを再実行してください');
 }
 
 // NG本文ハイライトタップ → 語尾と同じ「文ごと書き換え」ポップアップ（該当箇所へボタンなし）
@@ -720,9 +747,9 @@ function eH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,
 function eR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 function toast(m,showProofBtn){
   const e=document.getElementById('toast');
-  let html='<span class="mi" style="font-size:16px">check_circle</span>'+m;
-  if(showProofBtn){html+='<button onclick="goProof()" style="margin-left:10px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:\'Hiragino Sans\',sans-serif;white-space:nowrap">チェック結果へ</button>';}
-  e.innerHTML=html;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),4000);
+  let html='<span class="mi" style="font-size:18px">check_circle</span><span style="flex:1">'+m+'</span>';
+  if(showProofBtn){html+='<button onclick="goProof()" style="flex-shrink:0;background:#fff;border:none;color:var(--primary-dark);border-radius:var(--radius-sm);padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Hiragino Sans\',sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.15)">チェック結果へ →</button>';}
+  e.innerHTML=html;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),4500);
 }
 function goProof(){
   document.getElementById('toast').classList.remove('show');
