@@ -94,7 +94,10 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <div class="collapse-body" id="ngBody"><div id="ngList" class="rule-list"></div>
 <div class="rule-add"><input class="input-text" id="ngW" placeholder="例：胸がぎゅっと"><button class="btn btn-secondary btn-sm" onclick="addNg()"><span class="mi mi-xs">add</span></button></div></div>
 
-<div style="margin:16px 0"><div class="setting-row" style="gap:8px;padding:0"><span style="font-size:13px">語尾連続：</span><select id="gobiSens"><option value="2">2回</option><option value="3" selected>3回</option></select></div></div>
+<div style="margin:16px 0;display:flex;flex-direction:column;gap:10px">
+<div class="setting-row" style="gap:8px;padding:0"><span style="font-size:13px">語尾連続：</span><select id="gobiSens"><option value="2">2回</option><option value="3" selected>3回</option></select></div>
+<div class="setting-row" style="gap:8px;padding:0;flex-wrap:wrap"><span style="font-size:13px">NG再登場距離：</span><select id="ngDist"><option value="1000">1000字以内</option><option value="2000" selected>2000字以内</option><option value="3000">3000字以内</option><option value="5000">5000字以内</option></select><span style="font-size:11px;color:var(--text3)">以内に同じ語が出たら警告</span></div>
+</div>
 <button class="btn btn-primary" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
 <div class="proof-summary" id="proofSum" style="display:none"></div>
 <div class="output-area" id="proofText" style="display:none;margin-top:12px;line-height:2.2;min-height:300px"></div>
@@ -217,8 +220,23 @@ function runProof(){
   // Yure
   yureRules.forEach(([a,b])=>{if(text.includes(a)&&text.includes(b)){const cA=(text.match(new RegExp(eR(a),'g'))||[]).length,cB=(text.match(new RegExp(eR(b),'g'))||[]).length;issues.push({type:'yure',wordA:a,wordB:b,countA:cA,countB:cB,message:'「'+a+'」('+cA+') と「'+b+'」('+cB+') が混在'});}});
 
-  // NG list with counts
-  ngRules.forEach(w=>{const cnt=(text.match(new RegExp(eR(w),'g'))||[]).length;if(cnt>0)issues.push({type:'ng',word:w,count:cnt,message:'「'+w+'」… '+cnt+'回'});});
+  // NG list: distance-based (直近X字以内に再登場したら警告)
+  const ngDist=+document.getElementById('ngDist').value;
+  ngRules.forEach(r=>{
+    const w=typeof r==='string'?r:(r.w||r);
+    const re=new RegExp(eR(w),'g');
+    const positions=[];let m;
+    while((m=re.exec(text))!==null)positions.push(m.index);
+    if(positions.length===0)return;
+    const pairs=[];
+    for(let i=1;i<positions.length;i++){
+      const dist=positions[i]-positions[i-1];
+      if(dist<=ngDist)pairs.push({from:positions[i-1],to:positions[i],dist:dist});
+    }
+    if(pairs.length===0)return;
+    const minDist=Math.min(...pairs.map(p=>p.dist));
+    issues.push({type:'ng',word:w,count:positions.length,pairs:pairs,message:'「'+w+'」… 直近'+minDist.toLocaleString()+'字以内に再登場（計'+positions.length+'回）'});
+  });
 
   renderProof(text);
 }
@@ -267,8 +285,11 @@ function renderProof(text){
       });
     }else if(is.type==='gobi'&&is.snippets){
       is.snippets.forEach(sn=>{let idx=0;while((idx=text.indexOf(sn,idx))>=0){marks.push({start:idx,end:idx+sn.length,cls:'hl-gobi',di:i});idx+=sn.length;}});
-    }else if(is.type==='ng'){
-      const w=is.word;let idx=0;while((idx=text.indexOf(w,idx))>=0){marks.push({start:idx,end:idx+w.length,cls:'hl-ng',di:i});idx+=w.length;}
+    }else if(is.type==='ng'&&is.pairs){
+      // 近すぎるペアに関わる位置だけをハイライト
+      const hlPos=new Set();
+      is.pairs.forEach(p=>{hlPos.add(p.from);hlPos.add(p.to);});
+      hlPos.forEach(idx=>{marks.push({start:idx,end:idx+is.word.length,cls:'hl-ng',di:i});});
     }
   });
   // 2) 位置順にソート（重複しないよう先勝ち）
@@ -305,17 +326,17 @@ function jumpTo(i){const el=document.querySelector('[data-i="'+i+'"]');if(el){el
 
 // Yure popup
 function sPop(e,el){
-  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,alt=el.dataset.alt;
-  p.innerHTML='<div class="yure-popup-title">「'+w+'」をどうしますか？</div><button class="btn btn-primary btn-sm" onclick="repW(this)" data-from="'+eH(w)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">swap_horiz</span>全て「'+alt+'」に変更</button><button class="btn btn-secondary btn-sm" onclick="hPop()"><span class="mi mi-xs">check</span>このまま</button>';
+  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,alt=el.dataset.alt,di=+el.dataset.i;
+  p.innerHTML='<div class="yure-popup-title">「'+w+'」をどうしますか？</div><button class="btn btn-primary btn-sm" onclick="repW(this)" data-from="'+eH(w)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">swap_horiz</span>全て「'+alt+'」に変更</button><button class="btn btn-secondary btn-sm" onclick="hPop();igIssue('+di+')"><span class="mi mi-xs">check</span>このまま（無視）</button>';
   showPop(p,el);
 }
 
 // NG popup
 function nPop(e,el){
-  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w;
+  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,di=+el.dataset.i;
   p.innerHTML='<div class="yure-popup-title">NG：「'+w+'」</div>'
     +'<div style="margin-bottom:8px;display:flex;gap:6px;align-items:center"><input class="input-text" id="ngEditVal" value="'+eH(w)+'" style="flex:1;font-size:13px"><button class="btn btn-primary btn-sm" onclick="ngEdit(this)" data-from="'+eH(w)+'"><span class="mi mi-xs">swap_horiz</span>変更</button></div>'
-    +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>このまま</button>';
+    +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop();igIssue('+di+')"><span class="mi mi-xs">check</span>このまま（無視）</button>';
   showPop(p,el);
   setTimeout(()=>{const inp=document.getElementById('ngEditVal');if(inp){inp.focus();inp.select();}},50);
 }
@@ -351,7 +372,13 @@ function repW(btn){
 function rYure(){document.getElementById('yureList').innerHTML=yureRules.map((r,i)=>'<div class="rule-row"><input class="input-text" value="'+eH(r[0])+'" onchange="yureRules['+i+'][0]=this.value;sj(\'novelcraft_yure\',yureRules)"><span style="color:var(--text3);flex-shrink:0">↔</span><input class="input-text" value="'+eH(r[1])+'" onchange="yureRules['+i+'][1]=this.value;sj(\'novelcraft_yure\',yureRules)"><button class="btn-icon" onclick="yureRules.splice('+i+',1);rYure();sj(\'novelcraft_yure\',yureRules)"><span class="mi" style="font-size:14px">close</span></button></div>').join('');document.getElementById('yureCt').textContent=yureRules.length;}
 function addYure(){const a=document.getElementById('yA').value.trim(),b=document.getElementById('yB').value.trim();if(a&&b){yureRules.push([a,b]);document.getElementById('yA').value='';document.getElementById('yB').value='';rYure();sj('novelcraft_yure',yureRules);}}
 
-function rNg(){document.getElementById('ngList').innerHTML=ngRules.map((w,i)=>'<div class="rule-row"><input class="input-text" value="'+eH(w)+'" onchange="ngRules['+i+']=this.value;sj(\'novelcraft_ng\',ngRules)"><button class="btn-icon" onclick="ngRules.splice('+i+',1);rNg();sj(\'novelcraft_ng\',ngRules)"><span class="mi" style="font-size:14px">close</span></button></div>').join('');document.getElementById('ngCt').textContent=ngRules.length;}
+function rNg(){
+  document.getElementById('ngList').innerHTML=ngRules.map((r,i)=>{
+    const w=typeof r==='string'?r:(r.w||r);
+    return '<div class="rule-row"><input class="input-text" value="'+eH(w)+'" onchange="ngRules['+i+']=this.value;sj(\'novelcraft_ng\',ngRules)"><button class="btn-icon" onclick="ngRules.splice('+i+',1);rNg();sj(\'novelcraft_ng\',ngRules)"><span class="mi" style="font-size:14px">close</span></button></div>';
+  }).join('');
+  document.getElementById('ngCt').textContent=ngRules.length;
+}
 function addNg(){const w=document.getElementById('ngW').value.trim();if(w){ngRules.push(w);document.getElementById('ngW').value='';rNg();sj('novelcraft_ng',ngRules);}}
 
 function rRuby(){document.getElementById('rubyList').innerHTML=rubyRules.map((r,i)=>'<div class="rule-row"><input class="input-text" value="'+eH(r[0])+'" onchange="rubyRules['+i+'][0]=this.value;sj(\'novelcraft_ruby\',rubyRules);upPrev()"><span style="color:var(--text3);flex-shrink:0">→</span><input class="input-text" value="'+eH(r[1])+'" onchange="rubyRules['+i+'][1]=this.value;sj(\'novelcraft_ruby\',rubyRules);upPrev()"><button class="btn-icon" onclick="rubyRules.splice('+i+',1);rRuby();sj(\'novelcraft_ruby\',rubyRules);upPrev()"><span class="mi" style="font-size:14px">close</span></button></div>').join('');}
