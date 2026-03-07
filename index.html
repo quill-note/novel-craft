@@ -490,19 +490,24 @@ function sPop(e,el){
 // スニペットクリック：編集ポップアップのみ（ジャンプはボタンから）
 function snipEditPop(e,el,word,pos,di){
   e.stopPropagation();
-
   const p=document.getElementById('yPop');
   const src=document.getElementById('srcEditor').value;
+  const fmtText=fmt||src;
   const is=issues[di];
   const isNg=is&&is.type==='ng';
-
-  // 前後文脈
-  const before=src.slice(Math.max(0,pos-60),pos);
-  const after=src.slice(pos+word.length,pos+word.length+60);
-  const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('\n'))+1;
-  const sentEnd=after.search(/[。\n]/);
-  const sentence=before.slice(sentStart)+word+(sentEnd>=0?after.slice(0,sentEnd+1):after);
-  const ctx='…'+eH(src.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(src.slice(pos+word.length,pos+word.length+12))+'…';
+  // 文脈表示は完成版posで
+  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
+  // NG文の取得：完成版posから完成版の文を特定→原文に対応
+  let sentence='';
+  if(isNg){
+    const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
+    const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
+    const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
+    const fSentEnd=fAfter.search(/[。\n]/);
+    const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
+    const found=resolveSrcSentence2(src,fmtSentence);
+    sentence=found?found.text:fmtSentence.replace(/^[　\s]+/,'');
+  }
 
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   // 語句の置換
@@ -534,10 +539,12 @@ function snipEdit(word,pos,di){
   const localIdx=searchArea.indexOf(word);
   if(localIdx<0){toast('位置がずれています。チェックを再実行してください');return;}
   const actualPos=searchFrom+localIdx;
+  const savedHTML=document.getElementById('yPop').innerHTML;
   hPop();
   showConfirm('この1箇所を書き換えますか？',
     '<del>'+eH(word)+'</del> → <ins>'+eH(to)+'</ins>',
-    ()=>{s.value=src.slice(0,actualPos)+to+src.slice(actualPos+word.length);upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();}
+    ()=>{s.value=src.slice(0,actualPos)+to+src.slice(actualPos+word.length);upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();},
+    savedHTML
   );
 }
 function snipSentEdit(pos){
@@ -550,10 +557,12 @@ function snipSentEdit(pos){
   let idx=origSent?s.value.indexOf(origSent,Math.max(0,pos-30)):-1;
   if(idx<0&&origSent)idx=s.value.indexOf(origSent);
   if(idx<0){toast('文の位置がずれています。チェックを再実行してください');return;}
+  const savedHTML=document.getElementById('yPop').innerHTML;
   hPop();
   showConfirm('この文を書き換えますか？',
     '<del>'+eH(origSent.slice(0,40))+(origSent.length>40?'…':'')+'</del><br><ins>'+eH(to.slice(0,40))+(to.length>40?'…':'')+'</ins>',
-    ()=>{s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);upPrev();upCt();toast('文を書き換えました',true);runProof();}
+    ()=>{s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);upPrev();upCt();toast('文を書き換えました',true);runProof();},
+    savedHTML
   );
 }
 // 共通：原文から文を取得するヘルパー（キーワードの末尾N字で検索）
@@ -674,7 +683,6 @@ function snipSentEditGobi(){
   const to=ta.value;
   const origSent=ta.dataset.orig||'';
   if(!to||to===origSent){hPop();return;}
-  // resolveSrcSentenceで位置を特定
   const s=document.getElementById('srcEditor');
   const src=s.value;
   let idx=src.indexOf(origSent);
@@ -684,10 +692,12 @@ function snipSentEditGobi(){
     if(found){idx=found.start;replaceLen=found.text.length;}
   }
   if(idx<0){toast('文の位置が見つかりません。チェックを再実行してください');return;}
+  const savedHTML=document.getElementById('yPop').innerHTML;
   hPop();
   showConfirm('この文を書き換えますか？',
     '<del>'+eH(origSent.slice(0,40))+(origSent.length>40?'…':'')+'</del><br><ins>'+eH(to.slice(0,40))+(to.length>40?'…':'')+'</ins>',
-    ()=>{s.value=src.slice(0,idx)+to+src.slice(idx+replaceLen);upPrev();upCt();toast('文を書き換えました',true);runProof();}
+    ()=>{s.value=src.slice(0,idx)+to+src.slice(idx+replaceLen);upPrev();upCt();toast('文を書き換えました',true);runProof();},
+    savedHTML
   );
 }
 
@@ -798,38 +808,44 @@ function cpOut(){navigator.clipboard.writeText(fmt);toast('コピー');}
 
 function eH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function eR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
-let _confCallback=null,_lastPopEl=null;
-function showConfirm(msg,preview,cb){
+let _confCallback=null,_lastPopEl=null,_savedPopHTML=null;
+function showConfirm(msg,preview,cb,savedHTML){
   document.getElementById('confMsg').textContent=msg;
   document.getElementById('confPrev').innerHTML=preview;
   _confCallback=cb;
+  _savedPopHTML=savedHTML||null;
   document.getElementById('confOvl').classList.add('show');
 }
 function confOk(){
   document.getElementById('confOvl').classList.remove('show');
   if(_confCallback){_confCallback();_confCallback=null;}
-  _lastPopEl=null;
+  _lastPopEl=null;_savedPopHTML=null;
 }
 function confCancel(){
   document.getElementById('confOvl').classList.remove('show');
   _confCallback=null;
-  // 元のポップアップを再表示
+  const html=_savedPopHTML;
   const el=_lastPopEl;
+  _savedPopHTML=null;
   _lastPopEl=null;
-  if(el){
+  if(html&&el){
     const p=document.getElementById('yPop');
-    if(p&&p.innerHTML){
-      _popActive=true; // requestAnimationFrameのガードを通過させる
-      p.style.display='block';p.style.left='0';p.style.top='-9999px';
-      requestAnimationFrame(()=>{
-        const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph=p.offsetHeight;
-        let left=pw>=window.innerWidth-16?8:Math.max(8,Math.min(r.left,window.innerWidth-pw-8));
-        let top=r.bottom+8;
-        if(top+ph>window.innerHeight-8)top=Math.max(8,r.top-ph-8);
-        p.style.left=left+'px';p.style.top=top+'px';
-      });
-      setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta)ta.focus();},80);
-    }
+    p.innerHTML=html;
+    _popActive=true;
+    p.style.display='block';p.style.left='0';p.style.top='-9999px';
+    requestAnimationFrame(()=>{
+      const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph=p.offsetHeight;
+      let left=pw>=window.innerWidth-16?8:Math.max(8,Math.min(r.left,window.innerWidth-pw-8));
+      let top=r.bottom+8;
+      if(top+ph>window.innerHeight-8)top=Math.max(8,r.top-ph-8);
+      p.style.left=left+'px';p.style.top=top+'px';
+    });
+    setTimeout(()=>{
+      const ta=document.getElementById('snipSentVal');
+      const inp=document.getElementById('snipEditVal');
+      if(ta)ta.focus();
+      else if(inp){inp.focus();inp.select();}
+    },80);
   }
 }
 function toast(m,showProofBtn){
