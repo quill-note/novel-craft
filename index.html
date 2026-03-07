@@ -284,7 +284,7 @@ function renderProof(text){
     }else if(m.cls==='hl-gobi'){
       html+='<span class="hl-gobi" data-i="'+m.di+'">'+inner+'</span>';
     }else{
-      html+='<span class="hl-ng" data-i="'+m.di+'">'+inner+'</span>';
+      html+='<span class="hl-ng" data-i="'+m.di+'" data-w="'+eH(text.slice(m.start,m.end))+'" onclick="nPop(event,this)">'+inner+'</span>';
     }
     pos=m.end;
   });
@@ -307,9 +307,29 @@ function jumpTo(i){const el=document.querySelector('[data-i="'+i+'"]');if(el){el
 function sPop(e,el){
   e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,alt=el.dataset.alt;
   p.innerHTML='<div class="yure-popup-title">「'+w+'」をどうしますか？</div><button class="btn btn-primary btn-sm" onclick="repW(this)" data-from="'+eH(w)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">swap_horiz</span>全て「'+alt+'」に変更</button><button class="btn btn-secondary btn-sm" onclick="hPop()"><span class="mi mi-xs">check</span>このまま</button>';
-  p.style.display='block';
-  // 位置をリセットしてサイズ計算
-  p.style.left='0';p.style.top='0';
+  showPop(p,el);
+}
+
+// NG popup
+function nPop(e,el){
+  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w;
+  p.innerHTML='<div class="yure-popup-title">NG：「'+w+'」</div>'
+    +'<div style="margin-bottom:8px;display:flex;gap:6px;align-items:center"><input class="input-text" id="ngEditVal" value="'+eH(w)+'" style="flex:1;font-size:13px"><button class="btn btn-primary btn-sm" onclick="ngEdit(this)" data-from="'+eH(w)+'"><span class="mi mi-xs">swap_horiz</span>変更</button></div>'
+    +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>このまま</button>';
+  showPop(p,el);
+  setTimeout(()=>{const inp=document.getElementById('ngEditVal');if(inp){inp.focus();inp.select();}},50);
+}
+function ngEdit(btn){
+  const from=btn.dataset.from,to=document.getElementById('ngEditVal').value.trim();
+  if(!to||to===from){hPop();return;}
+  hPop();
+  const s=document.getElementById('srcEditor');
+  s.value=s.value.split(from).join(to);
+  upPrev();upCt();toast('「'+from+'」→「'+to+'」（全件変更）');runProof();
+}
+
+function showPop(p,el){
+  p.style.display='block';p.style.left='0';p.style.top='0';
   const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph2=p.offsetHeight;
   let left=r.left,top=r.bottom+8;
   if(left+pw>window.innerWidth-8)left=window.innerWidth-pw-8;
