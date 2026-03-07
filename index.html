@@ -734,9 +734,9 @@ function gPop(e,el){
 function snipSentEditGobi(){
   const ta=document.getElementById('snipSentVal');
   if(!ta)return;
-  const to=ta.value;
+  const to=ta.value.trim();
   const origSent=ta.dataset.orig||'';
-  if(!to||to===origSent){hPop();return;}
+  if(!to){hPop();return;}
   const s=document.getElementById('srcEditor');
   const src=s.value;
   // 原文検索：1)そのまま 2)字下げ付き 3)フォールバック
