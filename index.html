@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>執筆補助</title>
 <meta name="theme-color" content="#e87b6b">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -35,7 +38,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 .proof-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .proof-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px}
 .proof-badge.gobi{background:var(--primary-pale);color:var(--primary-dark)}.proof-badge.yure{background:var(--warnbg);color:var(--warn)}.proof-badge.ng{background:var(--info-pale);color:var(--info)}
-.proof-item{padding:6px 0;border-bottom:1px solid var(--primary-pale);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px}.proof-item:last-child{border-bottom:none}.proof-item:hover{background:var(--primary-pale);margin:0 -8px;padding:6px 8px;border-radius:var(--radius-sm)}.proof-item.ignored{opacity:.35;text-decoration:line-through}
+.proof-item{padding:6px 0;border-bottom:1px solid var(--primary-pale);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px}.proof-item:last-child{border-bottom:none}.proof-item:hover{background:var(--primary-pale);margin:0 -8px;padding:6px 8px;border-radius:var(--radius-sm)}.proof-item.ignored{opacity:.4;background:var(--bg);text-decoration:none}.proof-item.ignored .proof-tag{opacity:.5}.proof-item.ignored>span:nth-child(2){color:var(--text3)}
 .proof-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-right:4px;flex-shrink:0}.proof-tag.gobi{background:var(--primary-pale);color:var(--primary-dark)}.proof-tag.yure{background:var(--warnbg);color:var(--warn)}.proof-tag.ng{background:var(--info-pale);color:var(--info)}
 .proof-actions{margin-left:auto;display:flex;gap:2px;flex-shrink:0}
 .split-settings{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}.split-field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}.split-field input[type="number"]{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:14px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);width:100px;text-align:center;color:var(--text)}
@@ -242,7 +245,13 @@ function renderProof(text){
     h+='<div class="proof-item'+(ig?' ignored':'')+'" onclick="jumpTo('+i+')">';
     h+='<span class="proof-tag '+is.type+'">'+(({gobi:'語尾',yure:'表記ゆれ',ng:'NG'})[is.type])+'</span>';
     h+='<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+is.message+'</span>';
-    h+='<span class="proof-actions"><button class="btn-icon" title="'+(ig?'復元':'無視')+'" onclick="event.stopPropagation();igIssue('+i+')"><span class="mi" style="font-size:14px">'+(ig?'visibility':'visibility_off')+'</span></button></span>';
+    h+='<span class="proof-actions">';
+    if(ig){
+      h+='<button class="btn-icon" title="復元" onclick="event.stopPropagation();igIssue('+i+')" style="color:var(--text3)"><span class="mi" style="font-size:14px">visibility</span></button>';
+    }else{
+      h+='<button class="btn-icon" title="無視" onclick="event.stopPropagation();igIssue('+i+')"><span class="mi" style="font-size:14px">visibility_off</span></button>';
+    }
+    h+='</span>';
     h+='</div>';
   });
   sum.innerHTML=h;sum.style.display='block';
