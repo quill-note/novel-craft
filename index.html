@@ -247,19 +247,40 @@ function renderProof(text){
   });
   sum.innerHTML=h;sum.style.display='block';
 
-  // Highlighted text
-  let html=eH(text);
+  // Highlighted text: プレースホルダ方式でspanを安全に埋め込む
+  // 1) マーク位置を収集
+  const marks=[];
   issues.forEach((is,i)=>{
     if(isIg(is))return;
     if(is.type==='yure'){
-      html=html.replace(new RegExp(eR(is.wordA),'g'),'<span class="hl-yure" data-i="'+i+'" data-w="'+eH(is.wordA)+'" data-alt="'+eH(is.wordB)+'" onclick="sPop(event,this)">'+is.wordA+'</span>');
-      html=html.replace(new RegExp(eR(is.wordB),'g'),'<span class="hl-yure" data-i="'+i+'" data-w="'+eH(is.wordB)+'" data-alt="'+eH(is.wordA)+'" onclick="sPop(event,this)">'+is.wordB+'</span>');
+      [is.wordA,is.wordB].forEach(w=>{
+        const alt=w===is.wordA?is.wordB:is.wordA;
+        let idx=0;while((idx=text.indexOf(w,idx))>=0){marks.push({start:idx,end:idx+w.length,cls:'hl-yure',di:i,w:w,alt:alt});idx+=w.length;}
+      });
     }else if(is.type==='gobi'&&is.snippets){
-      is.snippets.forEach(sn=>{const safe=eH(sn);html=html.replace(safe,'<span class="hl-gobi" data-i="'+i+'">'+safe+'</span>');});
+      is.snippets.forEach(sn=>{let idx=0;while((idx=text.indexOf(sn,idx))>=0){marks.push({start:idx,end:idx+sn.length,cls:'hl-gobi',di:i});idx+=sn.length;}});
     }else if(is.type==='ng'){
-      html=html.replace(new RegExp(eR(is.word),'g'),'<span class="hl-ng" data-i="'+i+'">'+is.word+'</span>');
+      const w=is.word;let idx=0;while((idx=text.indexOf(w,idx))>=0){marks.push({start:idx,end:idx+w.length,cls:'hl-ng',di:i});idx+=w.length;}
     }
   });
+  // 2) 位置順にソート（重複しないよう先勝ち）
+  marks.sort((a,b)=>a.start-b.start);
+  // 3) テキストをチャンクに分割してHTMLを組み立て
+  let html='',pos=0;
+  marks.forEach(m=>{
+    if(m.start<pos)return; // 重複スキップ
+    html+=eH(text.slice(pos,m.start));
+    const inner=eH(text.slice(m.start,m.end));
+    if(m.cls==='hl-yure'){
+      html+='<span class="hl-yure" data-i="'+m.di+'" data-w="'+eH(m.w)+'" data-alt="'+eH(m.alt)+'" onclick="sPop(event,this)">'+inner+'</span>';
+    }else if(m.cls==='hl-gobi'){
+      html+='<span class="hl-gobi" data-i="'+m.di+'">'+inner+'</span>';
+    }else{
+      html+='<span class="hl-ng" data-i="'+m.di+'">'+inner+'</span>';
+    }
+    pos=m.end;
+  });
+  html+=eH(text.slice(pos));
   tEl.innerHTML=html;tEl.style.display='block';
 }
 
