@@ -103,7 +103,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px">
 <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
 </div>
-<div class="proof-summary" id="proofSum" style="display:none"></div>
+<div class="proof-summary" id="proofSum" style="display:none;margin-top:16px"></div>
 <div class="output-area" id="proofText" style="display:none;margin-top:12px;line-height:2.2;min-height:300px"></div>
 </section>
 
@@ -415,10 +415,12 @@ function snipEditPop(e,el,word,pos,di){
 
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   // 語句の置換
-  html+='<div style="margin-bottom:6px;display:flex;gap:6px;align-items:center">'
-    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="flex:1;font-size:13px;min-width:0" placeholder="語句を変更">'
-    +'<button class="btn btn-primary btn-sm" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>1箇所</button>'
-    +'<button class="btn btn-secondary btn-sm" onclick="snipEditAll(\''+eH(word)+'\','+di+')"><span class="mi mi-xs">swap_horiz</span>全件</button>'
+  html+='<div style="margin-bottom:6px">'
+    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="width:100%;font-size:13px;margin-bottom:6px" placeholder="語句を変更">'
+    +'<div style="display:flex;gap:6px">'
+    +'<button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>この1箇所</button>'
+    +'<button class="btn btn-secondary btn-sm" style="flex:1;justify-content:center" onclick="snipEditAll(\''+eH(word)+'\','+di+')"><span class="mi mi-xs">swap_horiz</span>全件変更</button>'
+    +'</div>'
     +'</div>';
   // NGの場合：文ごと編集エリア
   if(isNg){
