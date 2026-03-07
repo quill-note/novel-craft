@@ -422,8 +422,9 @@ function sPop(e,el){
   const alt=el.dataset.alt||'';
 
   const p=document.getElementById('yPop');
-  const src=document.getElementById('srcEditor').value;
-  const ctx='…'+eH(src.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(src.slice(pos+word.length,pos+word.length+12))+'…';
+  // posは完成版の位置なので、完成版テキストで文脈表示
+  const fmtText=fmt||document.getElementById('srcEditor').value;
+  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
 
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   html+='<div style="margin-bottom:6px">'
@@ -434,7 +435,6 @@ function sPop(e,el){
     html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(word)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(alt)+'」に統一</button>';
     html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(alt)+'" data-to="'+eH(word)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(word)+'」に統一</button>';
   }
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpToPos('+pos+','+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
   showPop(p,el);
@@ -547,15 +547,23 @@ function resolveSrcSentence(fmtSentence){
   const stripped=fmtSentence.replace(/^[　\s]+/,'');
   let idx=src.indexOf(stripped);
   if(idx>=0){
-    // 原文から文の実際の範囲を切り出す
-    const before=src.slice(Math.max(0,idx-5),idx);
-    const sentStart=idx; // strippedの先頭がそのまま文の始まり
     const after=src.slice(idx+stripped.length,idx+stripped.length+30);
     const sentEnd=after.search(/[。！？\n]/);
     const text=stripped+(sentEnd>=0?after.slice(0,sentEnd+1):'');
-    return {text,start:sentStart};
+    return {text,start:idx};
   }
-  // 2) キーワード長を変えて検索（20→15→10→6字）
+  // 2) 末尾の句点・感嘆符を除いた部分で検索（記号変換差異を吸収）
+  const noEnd=stripped.replace(/[。！？]+$/,'');
+  if(noEnd.length>=4){
+    idx=src.indexOf(noEnd);
+    if(idx>=0){
+      const after=src.slice(idx+noEnd.length,idx+noEnd.length+10);
+      const sentEnd=after.search(/[。！？\n]/);
+      const text=noEnd+(sentEnd>=0?after.slice(0,sentEnd+1):'');
+      return {text,start:idx};
+    }
+  }
+  // 3) キーワード長を変えて検索（20→15→10→6字）
   for(const len of [20,15,10,6]){
     const found=getSrcSentByKeyword(src,fmtSentence,len);
     if(found&&found.text)return found;
