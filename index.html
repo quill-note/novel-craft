@@ -255,7 +255,11 @@ function runProof(){
       if(consecutive){
         let c=sens;while(i+c<paraSents.length&&paraSents[i+c].ending===paraSents[i].ending)c++;
         const snippets=paraSents.slice(i,i+c).map(s=>s.snippet);
-        const snippetTexts=paraSents.slice(i,i+c).map(s=>findSrcSent(s.text));
+        const snippetTexts=paraSents.slice(i,i+c).map(s=>{
+          const result=findSrcSent(s.text);
+          console.log('[gobi]fmt:', JSON.stringify(s.text), '→src:', JSON.stringify(result));
+          return result;
+        });
         issues.push({type:'gobi',ending:paraSents[i].ending,count:c,message:'「'+paraSents[i].ending+'」が'+c+'文連続',snippets:snippets,snippetTexts:snippetTexts});
         i+=c-1;
       }
