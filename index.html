@@ -466,12 +466,13 @@ function snipEditPop(e,el,word,pos,di){
   if(isNg){
     html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
       +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(sentence)+'</textarea>'
-      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEdit(\''+eH(sentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\','+pos+')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEdit('+pos+')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
   }
   // 該当箇所へジャンプボタン
   html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpToPos('+pos+','+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
+  if(isNg){const ta=document.getElementById('snipSentVal');if(ta)ta.dataset.orig=sentence;}
   showPop(p,el);
   setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},80);
 }
@@ -502,91 +503,28 @@ function snipEditAll(word,di){
   s.value=s.value.split(word).join(to);
   upPrev();upCt();toast('「'+word+'」→「'+to+'」（全件）',true);runProof();
 }
-function snipSentEdit(origSent,pos){
-  const el=document.getElementById('snipSentVal');
-  if(!el)return;
-  const to=el.value;
+function snipSentEdit(pos){
+  const ta=document.getElementById('snipSentVal');
+  if(!ta)return;
+  const to=ta.value;
+  const origSent=ta.dataset.orig||'';
   if(!to||to===origSent){hPop();return;}
   hPop();
   const s=document.getElementById('srcEditor');
-  const idx=s.value.indexOf(origSent,Math.max(0,pos-30));
+  // posヒントで近傍検索、なければ全文検索
+  let idx=origSent?s.value.indexOf(origSent,Math.max(0,pos-30)):-1;
+  if(idx<0&&origSent)idx=s.value.indexOf(origSent);
   if(idx>=0){
     s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
     upPrev();upCt();toast('文を書き換えました',true);runProof();
   }else{
-    toast('文の位置がずれています');
+    toast('文の位置がずれています。チェックを再実行してください');
   }
-}
-// 語尾スニペットタップ → 文ごと書き換えポップアップ（チェック結果から）
-function gobiSnipPop(e,el,fmtSentence,di){
-  e.stopPropagation();
-  const p=document.getElementById('yPop');
-
-  // 完成版の文末尾キーワードで原文を検索して原文ベースの文を取得
-  const src=document.getElementById('srcEditor').value;
-  const keyword=fmtSentence.replace(/^　/,'').replace(/[。！？\s　]+$/,'').slice(-12);
-  let srcSentence=fmtSentence.replace(/^　/,''); // デフォルト：字下げだけ除去
-  if(keyword){
-    const idx=src.indexOf(keyword);
-    if(idx>=0){
-      const before=src.slice(Math.max(0,idx-100),idx+keyword.length);
-      const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
-      const afterIdx=idx+keyword.length;
-      const after=src.slice(afterIdx,afterIdx+30);
-      const sentEnd=after.search(/[。！？\n]/);
-      srcSentence=before.slice(sentStart)+(sentEnd>=0?after.slice(0,sentEnd+1):after);
-    }
-  }
-
-  const ctx=eH(fmtSentence.slice(-20));
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">…'+ctx+'</div>';
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
-    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(\''+eH(srcSentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
-  if(di!=null){
-    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpTo('+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
-  }
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  showPop(p,el);
-  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
-}
-
-// 語尾本文ハイライトタップ → NGと同じ「文ごと書き換え」ポップアップを表示
-function gPop(e,el){
-  e.stopPropagation();
-  const pos=+el.dataset.pos;
-  const word=el.dataset.w||el.textContent;
-
-  const p=document.getElementById('yPop');
-  // 完成版テキストから文を抽出（posは完成版上の位置）
-  const fmtText=fmt||document.getElementById('srcEditor').value;
-  const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
-  const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
-  const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
-  const fSentEnd=fAfter.search(/[。\n]/);
-  const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
-
-  const src=document.getElementById('srcEditor').value;
-  const foundSent=getSrcSentByKeyword(src,fmtSentence,20);
-  const srcSentence=foundSent?foundSent.text:fmtSentence.replace(/^　/,'');
-
-  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
-
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
-    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(\''+eH(srcSentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  showPop(p,el);
-  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
 }
 // 共通：原文から文を取得するヘルパー（キーワードの末尾N字で検索）
 function getSrcSentByKeyword(src, keyword, len){
-  // keyword末尾から最大lenの文字で検索
   const kw=keyword.replace(/^[　\s]+/,'').replace(/[。！？\s　]+$/,'').slice(-len);
-  if(!kw)return null;
+  if(!kw||kw.length<2)return null;
   const idx=src.indexOf(kw);
   if(idx<0)return null;
   const before=src.slice(Math.max(0,idx-120),idx+kw.length);
@@ -599,36 +537,104 @@ function getSrcSentByKeyword(src, keyword, len){
     start: Math.max(0,idx-120)+sentStart
   };
 }
-// 語尾・NG用：書き換え実行（origSentで検索、見つからなければキーワード再検索）
-function snipSentEditGobi(origSent){
-  const el=document.getElementById('snipSentVal');
-  if(!el)return;
-  const to=el.value;
+
+// 原文から文を特定（複数の戦略を順に試す）
+function resolveSrcSentence(fmtSentence){
+  const src=document.getElementById('srcEditor').value;
+  // 1) 字下げ除去してそのまま検索
+  const stripped=fmtSentence.replace(/^[　\s]+/,'');
+  let idx=src.indexOf(stripped);
+  if(idx>=0){
+    const before=src.slice(Math.max(0,idx-20),idx);
+    const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
+    return {text:stripped,start:idx};
+  }
+  // 2) キーワード長を変えて検索（20→15→10→6字）
+  for(const len of [20,15,10,6]){
+    const found=getSrcSentByKeyword(src,fmtSentence,len);
+    if(found&&found.text)return found;
+  }
+  return null;
+}
+
+// 語尾スニペットタップ → 文ごと書き換えポップアップ（チェック結果から）
+function gobiSnipPop(e,el,fmtSentence,di){
+  e.stopPropagation();
+  const p=document.getElementById('yPop');
+  const found=resolveSrcSentence(fmtSentence);
+  const srcSentence=found?found.text:fmtSentence.replace(/^[　\s]+/,'');
+  const ctx=eH(fmtSentence.slice(-20));
+  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">…'+ctx+'</div>';
+  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
+    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+  if(di!=null){
+    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpTo('+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
+  }
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+  p.innerHTML=html;
+  // origSentをdata属性で保持（エスケープ問題を回避）
+  document.getElementById('snipSentVal').dataset.orig=srcSentence;
+  showPop(p,el);
+  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
+}
+
+// 語尾本文ハイライトタップ → 文ごと書き換えポップアップを表示
+function gPop(e,el){
+  e.stopPropagation();
+  const pos=+el.dataset.pos;
+  const word=el.dataset.w||el.textContent;
+  const p=document.getElementById('yPop');
+  const fmtText=fmt||document.getElementById('srcEditor').value;
+  const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
+  const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
+  const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
+  const fSentEnd=fAfter.search(/[。\n]/);
+  const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
+  const found=resolveSrcSentence(fmtSentence);
+  const srcSentence=found?found.text:fmtSentence.replace(/^[　\s]+/,'');
+  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
+  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
+  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
+    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+  p.innerHTML=html;
+  document.getElementById('snipSentVal').dataset.orig=srcSentence;
+  showPop(p,el);
+  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
+}
+
+// 語尾・NG用：書き換え実行（textareaのdata-origを使って検索）
+function snipSentEditGobi(){
+  const ta=document.getElementById('snipSentVal');
+  if(!ta)return;
+  const to=ta.value;
+  const origSent=ta.dataset.orig||'';
   if(!to||to===origSent){hPop();return;}
   hPop();
   const s=document.getElementById('srcEditor');
-  // 1) そのまま検索
-  let idx=s.value.indexOf(origSent);
-  // 2) 字下げ除去して検索
-  if(idx<0){
-    const stripped=origSent.replace(/^[　\s]+/,'');
-    idx=s.value.indexOf(stripped);
-    if(idx>=0){
-      s.value=s.value.slice(0,idx)+to+s.value.slice(idx+stripped.length);
-      upPrev();upCt();toast('文を書き換えました',true);runProof();
-      return;
-    }
-  }else{
-    s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();
-    return;
+  const src=s.value;
+  // 1) origSentそのまま
+  let idx=src.indexOf(origSent);
+  if(idx>=0){
+    s.value=src.slice(0,idx)+to+src.slice(idx+origSent.length);
+    upPrev();upCt();toast('文を書き換えました',true);runProof();return;
   }
-  // 3) キーワード末尾15字で再検索（長さを増やして精度アップ）
-  const found=getSrcSentByKeyword(s.value,origSent,15)||getSrcSentByKeyword(s.value,origSent,10)||getSrcSentByKeyword(s.value,origSent,6);
-  if(found){
-    s.value=s.value.slice(0,found.start)+to+s.value.slice(found.start+found.text.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();
-    return;
+  // 2) 字下げ除去
+  const stripped=origSent.replace(/^[　\s]+/,'');
+  idx=src.indexOf(stripped);
+  if(idx>=0){
+    s.value=src.slice(0,idx)+to+src.slice(idx+stripped.length);
+    upPrev();upCt();toast('文を書き換えました',true);runProof();return;
+  }
+  // 3) キーワード再検索（長さを変えて複数回試行）
+  for(const len of [20,15,10,6]){
+    const found=getSrcSentByKeyword(src,origSent,len);
+    if(found&&found.text){
+      s.value=src.slice(0,found.start)+to+src.slice(found.start+found.text.length);
+      upPrev();upCt();toast('文を書き換えました',true);runProof();return;
+    }
   }
   toast('文の位置が見つかりません。チェックを再実行してください');
 }
@@ -638,7 +644,6 @@ function nPop(e,el){
   e.stopPropagation();
   const pos=+el.dataset.pos;
   const word=el.dataset.w||el.textContent;
-
   const p=document.getElementById('yPop');
   const fmtText=fmt||document.getElementById('srcEditor').value;
   const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
@@ -646,19 +651,16 @@ function nPop(e,el){
   const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
   const fSentEnd=fAfter.search(/[。\n]/);
   const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
-
-  const src=document.getElementById('srcEditor').value;
-  const foundSent=getSrcSentByKeyword(src,fmtSentence,20);
-  const srcSentence=foundSent?foundSent.text:fmtSentence.replace(/^　/,'');
-
+  const found=resolveSrcSentence(fmtSentence);
+  const srcSentence=found?found.text:fmtSentence.replace(/^[　\s]+/,'');
   const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
-
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
     +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(\''+eH(srcSentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
+  document.getElementById('snipSentVal').dataset.orig=srcSentence;
   showPop(p,el);
   setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
 }
