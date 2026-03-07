@@ -529,39 +529,38 @@ function getSrcSentByKeyword(src, keyword, len){
   if(!kw||kw.length<2)return null;
   const idx=src.indexOf(kw);
   if(idx<0)return null;
-  const before=src.slice(Math.max(0,idx-120),idx+kw.length);
-  const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
+  // beforeはキーワード直前まで（最大120字）
+  const beforeStart=Math.max(0,idx-120);
+  const before=src.slice(beforeStart,idx);
+  const sentStartInBefore=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
+  const sentStart=beforeStart+sentStartInBefore;
   const afterIdx=idx+kw.length;
   const after=src.slice(afterIdx,afterIdx+60);
   const sentEnd=after.search(/[。！？\n]/);
   return {
-    text: before.slice(sentStart)+(sentEnd>=0?after.slice(0,sentEnd+1):after),
-    start: Math.max(0,idx-120)+sentStart
+    text: src.slice(sentStart,afterIdx)+(sentEnd>=0?after.slice(0,sentEnd+1):''),
+    start: sentStart
   };
 }
 
 // 原文から文を特定（複数の戦略を順に試す）
 function resolveSrcSentence(fmtSentence){
   const src=document.getElementById('srcEditor').value;
+  const findSent=(src,idx,len)=>{
+    // idxから始まる文の終端を探す
+    const after=src.slice(idx+len,idx+len+30);
+    const sentEnd=after.search(/[。！？\n]/);
+    return {text:src.slice(idx,idx+len)+(sentEnd>=0?after.slice(0,sentEnd+1):''),start:idx};
+  };
   // 1) 字下げ除去してそのまま検索
   const stripped=fmtSentence.replace(/^[　\s]+/,'');
   let idx=src.indexOf(stripped);
-  if(idx>=0){
-    const after=src.slice(idx+stripped.length,idx+stripped.length+30);
-    const sentEnd=after.search(/[。！？\n]/);
-    const text=stripped+(sentEnd>=0?after.slice(0,sentEnd+1):'');
-    return {text,start:idx};
-  }
+  if(idx>=0)return findSent(src,idx,stripped.length);
   // 2) 末尾の句点・感嘆符を除いた部分で検索（記号変換差異を吸収）
   const noEnd=stripped.replace(/[。！？]+$/,'');
   if(noEnd.length>=4){
     idx=src.indexOf(noEnd);
-    if(idx>=0){
-      const after=src.slice(idx+noEnd.length,idx+noEnd.length+10);
-      const sentEnd=after.search(/[。！？\n]/);
-      const text=noEnd+(sentEnd>=0?after.slice(0,sentEnd+1):'');
-      return {text,start:idx};
-    }
+    if(idx>=0)return findSent(src,idx,noEnd.length);
   }
   // 3) キーワード長を変えて検索（20→15→10→6字）
   for(const len of [20,15,10,6]){
