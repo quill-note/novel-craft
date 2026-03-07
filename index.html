@@ -221,7 +221,6 @@ function runProof(){
   ngRules.forEach(w=>{const cnt=(text.match(new RegExp(eR(w),'g'))||[]).length;if(cnt>0)issues.push({type:'ng',word:w,count:cnt,message:'「'+w+'」… '+cnt+'回'});});
 
   renderProof(text);
-  if(window.innerWidth<=768)openMod('proof');
 }
 
 function renderProof(text){
