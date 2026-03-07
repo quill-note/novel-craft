@@ -357,10 +357,10 @@ function renderProof(text){
       h+='<div class="proof-snippets" id="pi-snip-'+i+'" style="width:100%;display:none">';
       if(is.type==='gobi'){
         const texts=is.snippetTexts&&is.snippetTexts.length?is.snippetTexts:is.snippets||[];
-        texts.forEach(st=>{
+        texts.forEach((st,si)=>{
           const enc=eH(st);
           const marked=enc.replace(new RegExp(eH(is.ending)+'$'),'<mark>'+eH(is.ending)+'</mark>');
-          h+='<div class="proof-snippet" onclick="event.stopPropagation();gobiSnipPop(event,this,\''+eH(st.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\','+i+')" title="タップして編集">'+marked+'</div>';
+          h+='<div class="proof-snippet" data-snip="'+eH(st)+'" data-di="'+i+'" onclick="event.stopPropagation();gobiSnipPopEl(event,this)" title="タップして編集">'+marked+'</div>';
         });
       }else if(is.type==='yure'){
         [...(is.snippetsA||[]),...(is.snippetsB||[])].forEach(s=>{
@@ -548,11 +548,13 @@ function snipEdit(word,pos,di){
   if(localIdx<0){toast('位置がずれています。チェックを再実行してください');return;}
   const actualPos=searchFrom+localIdx;
   const savedHTML=document.getElementById('yPop').innerHTML;
+  const savedOrig=null;
+  const savedInput=to;
   hPop();
   showConfirm('この1箇所を書き換えますか？',
     '<del>'+eH(word)+'</del> → <ins>'+eH(to)+'</ins>',
     ()=>{s.value=src.slice(0,actualPos)+to+src.slice(actualPos+word.length);upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();},
-    savedHTML
+    savedHTML, savedOrig, savedInput
   );
 }
 function snipSentEdit(pos){
@@ -566,11 +568,13 @@ function snipSentEdit(pos){
   if(idx<0&&origSent)idx=s.value.indexOf(origSent);
   if(idx<0){toast('文の位置がずれています。チェックを再実行してください');return;}
   const savedHTML=document.getElementById('yPop').innerHTML;
+  const savedOrig2=origSent;
+  const savedInput2=to;
   hPop();
   showConfirm('この文を書き換えますか？',
     '<del>'+eH(origSent.slice(0,40))+(origSent.length>40?'…':'')+'</del><br><ins>'+eH(to.slice(0,40))+(to.length>40?'…':'')+'</ins>',
     ()=>{s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);upPrev();upCt();toast('文を書き換えました',true);runProof();},
-    savedHTML
+    savedHTML, savedOrig2, savedInput2
   );
 }
 // 共通：原文から文を取得するヘルパー（キーワードの末尾N字で検索）
@@ -646,6 +650,13 @@ function resolveSrcSentence(fmtSentence){
   return resolveSrcSentence2(document.getElementById('srcEditor').value, fmtSentence);
 }
 
+// 語尾スニペットタップ（data属性版） → 文ごと書き換えポップアップ
+function gobiSnipPopEl(e,el){
+  const fmtSentence=el.dataset.snip||'';
+  const di=el.dataset.di!=null?+el.dataset.di:null;
+  gobiSnipPop(e,el,fmtSentence,di);
+}
+
 // 語尾スニペットタップ → 文ごと書き換えポップアップ（チェック結果から）
 function gobiSnipPop(e,el,fmtSentence,di){
   e.stopPropagation();
@@ -710,12 +721,15 @@ function snipSentEditGobi(){
     if(found){idx=found.start;replaceLen=found.text.length;}
   }
   if(idx<0){toast('文の位置が見つかりません。チェックを再実行してください');return;}
+  // hPop前に全情報を保存
   const savedHTML=document.getElementById('yPop').innerHTML;
+  const savedOrig=origSent;
+  const savedInput=to;
   hPop();
   showConfirm('この文を書き換えますか？',
     '<del>'+eH(origSent.slice(0,40))+(origSent.length>40?'…':'')+'</del><br><ins>'+eH(to.slice(0,40))+(to.length>40?'…':'')+'</ins>',
     ()=>{s.value=src.slice(0,idx)+to+src.slice(idx+replaceLen);upPrev();upCt();toast('文を書き換えました',true);runProof();},
-    savedHTML
+    savedHTML, savedOrig, savedInput
   );
 }
 
@@ -827,16 +841,13 @@ function cpOut(){navigator.clipboard.writeText(fmt);toast('コピー');}
 function eH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function eR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 let _confCallback=null,_lastPopEl=null,_savedPopHTML=null,_savedPopOrig=null,_savedPopInput=null;
-function showConfirm(msg,preview,cb,savedHTML){
+function showConfirm(msg,preview,cb,savedHTML,savedOrig,savedInput){
   document.getElementById('confMsg').textContent=msg;
   document.getElementById('confPrev').innerHTML=preview;
   _confCallback=cb;
   _savedPopHTML=savedHTML||null;
-  // ポップアップ内の入力値とorigを確認前に保存
-  const ta=document.getElementById('snipSentVal');
-  const inp=document.getElementById('snipEditVal');
-  _savedPopOrig=ta?(ta.dataset.orig||null):null;
-  _savedPopInput=ta?ta.value:(inp?inp.value:null);
+  _savedPopOrig=savedOrig!==undefined?savedOrig:null;
+  _savedPopInput=savedInput!==undefined?savedInput:null;
   document.getElementById('confOvl').classList.add('show');
 }
 function confOk(){
