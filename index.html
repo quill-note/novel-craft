@@ -547,16 +547,9 @@ function gPop(e,el){
   const fSentEnd=fAfter.search(/[。\n]/);
   const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
 
-  // 原文から同じ文を検索（完成版と原文で文字が変わる可能性があるので、wordを手がかりに近傍検索）
   const src=document.getElementById('srcEditor').value;
-  let srcSentence=fmtSentence; // デフォルトは完成版の文
-  const srcIdx=src.indexOf(word);
-  if(srcIdx>=0){
-    const sBefore=src.slice(Math.max(0,srcIdx-60),srcIdx);
-    const sAfter=src.slice(srcIdx+word.length,srcIdx+word.length+60);
-    const sSentStart=Math.max(sBefore.lastIndexOf('。'),sBefore.lastIndexOf('\n'))+1;
-    const sSentEnd=sAfter.search(/[。\n]/);
-    srcSentence=sBefore.slice(sSentStart)+word+(sSentEnd>=0?sAfter.slice(0,sSentEnd+1):sAfter);
+  const foundSent=getSrcSentByKeyword(src,fmtSentence,20);
+  const srcSentence=foundSent?foundSent.text:fmtSentence.replace(/^　/,'');
   }
 
   const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
@@ -570,7 +563,26 @@ function gPop(e,el){
   showPop(p,el);
   setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
 }
-// 語尾用：原文から文字列検索して書き換え（pos不要）
+// 共通：原文から文を取得するヘルパー（キーワードの末尾N字で検索）
+function getSrcSentByKeyword(src, keyword, len){
+  // keyword末尾から最大lenの文字で検索
+  const kw=keyword.replace(/^[　\s]+/,'').replace(/[。！？\s　]+$/,'').slice(-len);
+  if(!kw)return null;
+  const idx=src.indexOf(kw);
+  if(idx<0)return null;
+  const before=src.slice(Math.max(0,idx-120),idx+kw.length);
+  const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('
+'))+1;
+  const afterIdx=idx+kw.length;
+  const after=src.slice(afterIdx,afterIdx+60);
+  const sentEnd=after.search(/[。！？
+]/);
+  return {
+    text: before.slice(sentStart)+(sentEnd>=0?after.slice(0,sentEnd+1):after),
+    start: Math.max(0,idx-120)+sentStart
+  };
+}
+// 語尾・NG用：書き換え実行（origSentで検索、見つからなければキーワード再検索）
 function snipSentEditGobi(origSent){
   const el=document.getElementById('snipSentVal');
   if(!el)return;
@@ -578,13 +590,22 @@ function snipSentEditGobi(origSent){
   if(!to||to===origSent){hPop();return;}
   hPop();
   const s=document.getElementById('srcEditor');
-  const idx=s.value.indexOf(origSent);
-  if(idx>=0){
-    s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();
-  }else{
+  let idx=s.value.indexOf(origSent);
+  // 見つからない場合、origSentの末尾キーワードで文を再特定
+  if(idx<0){
+    const found=getSrcSentByKeyword(s.value,origSent,15);
+    if(found){
+      idx=found.start;
+      const actualSent=found.text;
+      s.value=s.value.slice(0,idx)+to+s.value.slice(idx+actualSent.length);
+      upPrev();upCt();toast('文を書き換えました',true);runProof();
+      return;
+    }
     toast('文の位置が見つかりません');
+    return;
   }
+  s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
+  upPrev();upCt();toast('文を書き換えました',true);runProof();
 }
 
 // NG本文ハイライトタップ → 語尾と同じ「文ごと書き換え」ポップアップ（該当箇所へボタンなし）
@@ -601,17 +622,9 @@ function nPop(e,el){
   const fSentEnd=fAfter.search(/[。\n]/);
   const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
 
-  // 原文からwordで近傍検索
   const src=document.getElementById('srcEditor').value;
-  let srcSentence=fmtSentence;
-  const srcIdx=src.indexOf(word);
-  if(srcIdx>=0){
-    const sBefore=src.slice(Math.max(0,srcIdx-60),srcIdx);
-    const sAfter=src.slice(srcIdx+word.length,srcIdx+word.length+60);
-    const sSentStart=Math.max(sBefore.lastIndexOf('。'),sBefore.lastIndexOf('\n'))+1;
-    const sSentEnd=sAfter.search(/[。\n]/);
-    srcSentence=sBefore.slice(sSentStart)+word+(sSentEnd>=0?sAfter.slice(0,sSentEnd+1):sAfter);
-  }
+  const foundSent=getSrcSentByKeyword(src,fmtSentence,20);
+  const srcSentence=foundSent?foundSent.text:fmtSentence.replace(/^　/,'');
 
   const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
 
