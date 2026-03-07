@@ -63,8 +63,8 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <div class="settings-panel"><button class="settings-toggle" id="sToggle"><span class="mi mi-sm">settings</span>書式設定を開く</button>
 <div class="settings-body" id="sBody">
 <div class="setting-group"><div class="setting-group-title"><span class="mi">swap_horiz</span>文字種の変換</div>
-<div class="setting-row"><label>英字</label><select id="optAlpha"><option value="none">変更しない</option><option value="full">全角</option><option value="half" selected>半角</option></select></div>
-<div class="setting-row"><label>数字</label><select id="optNum"><option value="none">変更しない</option><option value="full">全角</option><option value="half" selected>半角</option></select></div>
+<div class="setting-row"><label>英字</label><select id="optAlpha"><option value="none">変更しない</option><option value="full" selected>全角</option><option value="half">半角</option></select></div>
+<div class="setting-row"><label>数字</label><select id="optNum"><option value="none">変更しない</option><option value="full" selected>全角</option><option value="half">半角</option></select></div>
 <div class="setting-row"><label>記号(!?)</label><select id="optSym"><option value="none">変更しない</option><option value="full" selected>全角</option><option value="half">半角</option></select></div></div>
 <div class="setting-group"><div class="setting-group-title"><span class="mi">tune</span>変換ルール</div>
 <div class="setting-row"><label>行頭の字下げ<small>段落先頭に全角スペース</small></label><div class="toggle"><input type="checkbox" id="optIndent" checked><span class="slider"></span></div></div>
@@ -572,11 +572,17 @@ function resolveSrcSentence(fmtSentence){
     if(idx>=0)return findSent(src,idx,fullVer.length);
   }
 
-  // 3) 原文を半角に正規化して検索
+  // 3) 原文を半角に正規化して検索（インデックス一致後は原文から句点まで切り出す）
   const halfStripped=toHalf(stripped);
   const halfSrc=toHalf(src);
   idx=halfSrc.indexOf(halfStripped);
-  if(idx>=0)return findSent(src,idx,halfStripped.length);
+  if(idx>=0){
+    // 元のsrcのidxから句点までを切り出す
+    const after=src.slice(idx,idx+halfStripped.length+30);
+    const sentEnd=after.search(/[。！？\n]/);
+    const text=sentEnd>=0?after.slice(0,sentEnd+1):after;
+    return {text,start:idx};
+  }
 
   // 4) 末尾の句点・感嘆符を除いた部分で検索
   const noEnd=stripped.replace(/[。！？!?]+$/,'');
