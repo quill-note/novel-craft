@@ -33,12 +33,14 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 .hl-yure{background:rgba(196,138,42,.18);border-bottom:2px solid var(--warn);border-radius:2px;cursor:pointer}.hl-yure:hover{background:rgba(196,138,42,.35)}
 .hl-gobi{background:rgba(232,123,107,.18);border-bottom:2px solid var(--primary);border-radius:2px}
 .hl-ng{background:rgba(91,143,212,.18);border-bottom:2px solid var(--info);border-radius:2px}
-.yure-popup{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 4px 16px var(--shadow);padding:12px;min-width:180px;max-width:260px;font-size:13px}.yure-popup-title{font-size:11px;color:var(--text3);margin-bottom:8px}.yure-popup .btn{width:100%;justify-content:center;margin-bottom:6px}.yure-popup .btn:last-child{margin-bottom:0}
-.proof-summary{margin-top:16px;padding:12px 16px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--border);font-size:13px;line-height:1.8;max-height:350px;overflow-y:auto}
+.yure-popup{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 4px 16px var(--shadow);padding:12px;min-width:200px;max-width:280px;font-size:13px}.yure-popup-title{font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--font-mincho);line-height:1.6}.yure-popup-title mark{background:rgba(196,138,42,.25);color:var(--warn);border-radius:2px;font-style:normal;padding:0 2px}.yure-popup .btn{width:100%;justify-content:center;margin-bottom:6px}.yure-popup .btn:last-child{margin-bottom:0}
 .proof-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .proof-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px}
 .proof-badge.gobi{background:var(--primary-pale);color:var(--primary-dark)}.proof-badge.yure{background:var(--warnbg);color:var(--warn)}.proof-badge.ng{background:var(--info-pale);color:var(--info)}
-.proof-item{padding:6px 0;border-bottom:1px solid var(--primary-pale);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px}.proof-item:last-child{border-bottom:none}.proof-item:hover{background:var(--primary-pale);margin:0 -8px;padding:6px 8px;border-radius:var(--radius-sm)}.proof-item.ignored{opacity:.4;background:var(--bg);text-decoration:none}.proof-item.ignored .proof-tag{opacity:.5}.proof-item.ignored>span:nth-child(2){color:var(--text3)}
+.proof-item{padding:6px 0;border-bottom:1px solid var(--primary-pale);cursor:pointer;display:flex;align-items:flex-start;gap:8px;font-size:12px}.proof-item:last-child{border-bottom:none}.proof-item:hover{background:var(--primary-pale);margin:0 -8px;padding:6px 8px;border-radius:var(--radius-sm)}.proof-item.ignored{opacity:.4;background:var(--bg);text-decoration:none}.proof-item.ignored .proof-tag{opacity:.5}.proof-item.ignored>span:nth-child(2){color:var(--text3)}
+.proof-item-body{flex:1;min-width:0}
+.proof-snippets{margin-top:4px;display:flex;flex-direction:column;gap:3px}
+.proof-snippet{font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-family:var(--font-mincho);line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:var(--tr)}.proof-snippet:hover{border-color:var(--warn);background:var(--warnbg)}.proof-snippet mark{background:rgba(196,138,42,.25);color:var(--warn);border-radius:2px;font-style:normal;padding:0 1px}.proof-snippet.ng-snip:hover{border-color:var(--info);background:var(--info-pale)}.proof-snippet.ng-snip mark{background:rgba(91,143,212,.25);color:var(--info)}
 .proof-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-right:4px;flex-shrink:0}.proof-tag.gobi{background:var(--primary-pale);color:var(--primary-dark)}.proof-tag.yure{background:var(--warnbg);color:var(--warn)}.proof-tag.ng{background:var(--info-pale);color:var(--info)}
 .proof-actions{margin-left:auto;display:flex;gap:2px;flex-shrink:0}
 .split-settings{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}.split-field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}.split-field input[type="number"]{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:14px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);width:100px;text-align:center;color:var(--text)}
@@ -218,7 +220,16 @@ function runProof(){
   });
 
   // Yure
-  yureRules.forEach(([a,b])=>{if(text.includes(a)&&text.includes(b)){const cA=(text.match(new RegExp(eR(a),'g'))||[]).length,cB=(text.match(new RegExp(eR(b),'g'))||[]).length;issues.push({type:'yure',wordA:a,wordB:b,countA:cA,countB:cB,message:'「'+a+'」('+cA+') と「'+b+'」('+cB+') が混在'});}});
+  yureRules.forEach(([a,b])=>{
+    if(text.includes(a)&&text.includes(b)){
+      const getOccurrences=(w)=>{const re=new RegExp(eR(w),'g');const res=[];let m;while((m=re.exec(text))!==null)res.push(m.index);return res;};
+      const posA=getOccurrences(a),posB=getOccurrences(b);
+      const mkSnips=(positions,w)=>positions.map(idx=>({pos:idx,word:w,ctx:text.slice(Math.max(0,idx-12),idx)+'【'+w+'】'+text.slice(idx+w.length,idx+w.length+12)}));
+      issues.push({type:'yure',wordA:a,wordB:b,countA:posA.length,countB:posB.length,
+        snippetsA:mkSnips(posA,a),snippetsB:mkSnips(posB,b),
+        message:'「'+a+'」('+posA.length+') と「'+b+'」('+posB.length+') が混在'});
+    }
+  });
 
   // NG list: distance-based (直近X字以内に再登場したら警告)
   const ngDist=+document.getElementById('ngDist').value;
@@ -235,7 +246,13 @@ function runProof(){
     }
     if(pairs.length===0)return;
     const minDist=Math.min(...pairs.map(p=>p.dist));
-    issues.push({type:'ng',word:w,count:positions.length,pairs:pairs,message:'「'+w+'」… 直近'+minDist.toLocaleString()+'字以内に再登場（計'+positions.length+'回）'});
+    // ペアごとにスニペット生成（from側とto側）
+    const pairSnips=pairs.map(p=>({
+      from:p.from,to:p.to,dist:p.dist,
+      ctxFrom:text.slice(Math.max(0,p.from-10),p.from)+'【'+w+'】'+text.slice(p.from+w.length,p.from+w.length+10),
+      ctxTo:text.slice(Math.max(0,p.to-10),p.to)+'【'+w+'】'+text.slice(p.to+w.length,p.to+w.length+10)
+    }));
+    issues.push({type:'ng',word:w,count:positions.length,pairs:pairs,pairSnips:pairSnips,message:'「'+w+'」… 直近'+minDist.toLocaleString()+'字以内に再登場（計'+positions.length+'回）'});
   });
 
   renderProof(text);
@@ -259,16 +276,39 @@ function renderProof(text){
 
   issues.forEach((is,i)=>{
     const ig=isIg(is);
-    h+='<div class="proof-item'+(ig?' ignored':'')+'" onclick="jumpTo('+i+')">';
+    const hasSnips=!ig&&((is.type==='yure'&&(is.snippetsA||is.snippetsB))||(is.type==='ng'&&is.pairSnips));
+    // 項目タップ：スニペットあり→展開/折りたたみ、なし→ジャンプ
+    const clickAct=hasSnips?'togSnip('+i+')':'jumpTo('+i+')';
+    h+='<div class="proof-item'+(ig?' ignored':'')+'" id="pi-'+i+'" onclick="'+clickAct+'" style="flex-wrap:wrap;cursor:'+(ig?'default':'pointer')+'">';
     h+='<span class="proof-tag '+is.type+'">'+(({gobi:'語尾',yure:'表記ゆれ',ng:'NG'})[is.type])+'</span>';
     h+='<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+is.message+'</span>';
     h+='<span class="proof-actions">';
+    if(hasSnips){
+      h+='<span class="mi" id="pi-chev-'+i+'" style="font-size:16px;color:var(--text3);transition:transform .2s">expand_more</span>';
+    }
     if(ig){
       h+='<button class="btn-icon" title="復元" onclick="event.stopPropagation();igIssue('+i+')" style="color:var(--text3)"><span class="mi" style="font-size:14px">visibility</span></button>';
     }else{
       h+='<button class="btn-icon" title="無視" onclick="event.stopPropagation();igIssue('+i+')"><span class="mi" style="font-size:14px">visibility_off</span></button>';
     }
     h+='</span>';
+    if(hasSnips){
+      h+='<div class="proof-snippets" id="pi-snip-'+i+'" style="width:100%;display:none">';
+      if(is.type==='yure'){
+        [...(is.snippetsA||[]),...(is.snippetsB||[])].forEach(s=>{
+          const ctx=eH(s.ctx).replace('【'+eH(s.word)+'】','<mark>'+eH(s.word)+'</mark>');
+          h+='<div class="proof-snippet" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(s.word)+'\','+s.pos+','+i+')" title="タップして編集">…'+ctx+'…</div>';
+        });
+      }else if(is.type==='ng'){
+        is.pairSnips.forEach(ps=>{
+          const cF=eH(ps.ctxFrom).replace('【'+eH(is.word)+'】','<mark>'+eH(is.word)+'</mark>');
+          const cT=eH(ps.ctxTo).replace('【'+eH(is.word)+'】','<mark>'+eH(is.word)+'</mark>');
+          h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.from+','+i+')" title="タップして編集">…'+cF+'…</div>';
+          h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.to+','+i+')" title="タップして編集（'+ps.dist+'字後）">↳ '+ps.dist+'字後　…'+cT+'…</div>';
+        });
+      }
+      h+='</div>';
+    }
     h+='</div>';
   });
   sum.innerHTML=h;sum.style.display='block';
@@ -301,11 +341,11 @@ function renderProof(text){
     html+=eH(text.slice(pos,m.start));
     const inner=eH(text.slice(m.start,m.end));
     if(m.cls==='hl-yure'){
-      html+='<span class="hl-yure" data-i="'+m.di+'" data-w="'+eH(m.w)+'" data-alt="'+eH(m.alt)+'" onclick="sPop(event,this)">'+inner+'</span>';
+      html+='<span class="hl-yure" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(m.w)+'" data-alt="'+eH(m.alt)+'" onclick="sPop(event,this)">'+inner+'</span>';
     }else if(m.cls==='hl-gobi'){
-      html+='<span class="hl-gobi" data-i="'+m.di+'">'+inner+'</span>';
+      html+='<span class="hl-gobi" data-i="'+m.di+'" data-pos="'+m.start+'">'+inner+'</span>';
     }else{
-      html+='<span class="hl-ng" data-i="'+m.di+'" data-w="'+eH(text.slice(m.start,m.end))+'" onclick="nPop(event,this)">'+inner+'</span>';
+      html+='<span class="hl-ng" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(text.slice(m.start,m.end))+'" onclick="nPop(event,this)">'+inner+'</span>';
     }
     pos=m.end;
   });
@@ -322,7 +362,30 @@ function igIssue(i){
   renderProof(fmt||document.getElementById('srcEditor').value);
 }
 function resetIg(){ignored=new Set();renderProof(fmt||document.getElementById('srcEditor').value);toast('リセットしました');}
-function jumpTo(i){const el=document.querySelector('[data-i="'+i+'"]');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.outline='3px solid var(--primary)';el.style.outlineOffset='2px';setTimeout(()=>{el.style.outline='';el.style.outlineOffset='';},2000);}}
+function jumpTo(i){const el=document.querySelector('[data-i="'+i+'"]');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});hlEl(el);}}
+function jumpToPos(pos,di){
+  // data-i と data-pos が一致するspanを探す、なければdata-iで最初のものへ
+  const tEl=document.getElementById('proofText');
+  if(!tEl)return;
+  const spans=tEl.querySelectorAll('[data-i="'+di+'"]');
+  // spanのテキスト位置を逆算して最も近いものを選ぶ
+  let best=null,bestDist=Infinity;
+  spans.forEach(s=>{
+    const sp=+s.dataset.pos;
+    if(!isNaN(sp)){const d=Math.abs(sp-pos);if(d<bestDist){bestDist=d;best=s;}}
+  });
+  const target=best||spans[0];
+  if(target){target.scrollIntoView({behavior:'smooth',block:'center'});hlEl(target);}
+}
+function togSnip(i){
+  const snip=document.getElementById('pi-snip-'+i);
+  const chev=document.getElementById('pi-chev-'+i);
+  if(!snip)return;
+  const open=snip.style.display==='none';
+  snip.style.display=open?'flex':'none';
+  if(chev)chev.style.transform=open?'rotate(180deg)':'';
+}
+function hlEl(el){el.style.outline='3px solid var(--primary)';el.style.outlineOffset='2px';setTimeout(()=>{el.style.outline='';el.style.outlineOffset='';},2000);}
 
 // Yure popup
 function sPop(e,el){
@@ -331,22 +394,48 @@ function sPop(e,el){
   showPop(p,el);
 }
 
-// NG popup
-function nPop(e,el){
-  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,di=+el.dataset.i;
-  p.innerHTML='<div class="yure-popup-title">NG：「'+w+'」</div>'
-    +'<div style="margin-bottom:8px;display:flex;gap:6px;align-items:center"><input class="input-text" id="ngEditVal" value="'+eH(w)+'" style="flex:1;font-size:13px"><button class="btn btn-primary btn-sm" onclick="ngEdit(this)" data-from="'+eH(w)+'"><span class="mi mi-xs">swap_horiz</span>変更</button></div>'
-    +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop();igIssue('+di+')"><span class="mi mi-xs">check</span>このまま（無視）</button>';
+// スニペットクリック：その1箇所だけ編集
+function snipEditPop(e,el,word,pos,di){
+  e.stopPropagation();
+  const p=document.getElementById('yPop');
+  const src=document.getElementById('srcEditor').value;
+  // fmtとsrcの位置ずれがある可能性があるため、src上で該当語を探す
+  const ctx='…'+eH(src.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(src.slice(pos+word.length,pos+word.length+12))+'…';
+  p.innerHTML='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>'
+    +'<div style="margin-bottom:8px;display:flex;gap:6px;align-items:center">'
+    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="flex:1;font-size:13px">'
+    +'<button class="btn btn-primary btn-sm" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>この1箇所</button>'
+    +'</div>'
+    +'<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipEditAll(\''+eH(word)+'\','+di+')"><span class="mi mi-xs">swap_horiz</span>全件変更</button>'
+    +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   showPop(p,el);
-  setTimeout(()=>{const inp=document.getElementById('ngEditVal');if(inp){inp.focus();inp.select();}},50);
+  setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},50);
 }
-function ngEdit(btn){
-  const from=btn.dataset.from,to=document.getElementById('ngEditVal').value.trim();
-  if(!to||to===from){hPop();return;}
+function snipEdit(word,pos,di){
+  const to=document.getElementById('snipEditVal').value.trim();
+  if(!to||to===word){hPop();return;}
   hPop();
   const s=document.getElementById('srcEditor');
-  s.value=s.value.split(from).join(to);
-  upPrev();upCt();toast('「'+from+'」→「'+to+'」（全件変更）');runProof();
+  // pos位置のwordだけ置換
+  if(s.value.slice(pos,pos+word.length)===word){
+    s.value=s.value.slice(0,pos)+to+s.value.slice(pos+word.length);
+    upPrev();upCt();toast('1箇所を「'+to+'」に変更');runProof();
+  }else{
+    toast('位置がずれています。全件変更をお試しください');
+  }
+}
+function snipEditAll(word,di){
+  const to=document.getElementById('snipEditVal').value.trim();
+  if(!to||to===word){hPop();return;}
+  hPop();
+  const s=document.getElementById('srcEditor');
+  s.value=s.value.split(word).join(to);
+  upPrev();upCt();toast('「'+word+'」→「'+to+'」（全件）');runProof();
+}
+// NG popup (テキスト上のハイライトをクリック)
+function nPop(e,el){
+  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,di=+el.dataset.i,pos=+el.dataset.pos;
+  snipEditPop(e,el,w,pos,di);
 }
 
 function showPop(p,el){
