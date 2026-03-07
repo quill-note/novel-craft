@@ -221,16 +221,27 @@ function runProof(){
     }
   });
 
-  // Yure
+  // Yure: 前が漢字・ひらがな・カタカナでない位置のみマッチ（複合語除外）
+  const jpChar=/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF]/;
   yureRules.forEach(([a,b])=>{
-    if(text.includes(a)&&text.includes(b)){
-      const getOccurrences=(w)=>{const re=new RegExp(eR(w),'g');const res=[];let m;while((m=re.exec(text))!==null)res.push(m.index);return res;};
-      const posA=getOccurrences(a),posB=getOccurrences(b);
-      const mkSnips=(positions,w)=>positions.map(idx=>({pos:idx,word:w,ctx:text.slice(Math.max(0,idx-12),idx)+'【'+w+'】'+text.slice(idx+w.length,idx+w.length+12)}));
-      issues.push({type:'yure',wordA:a,wordB:b,countA:posA.length,countB:posB.length,
-        snippetsA:mkSnips(posA,a),snippetsB:mkSnips(posB,b),
-        message:'「'+a+'」('+posA.length+') と「'+b+'」('+posB.length+') が混在'});
-    }
+    const getOccurrences=(w)=>{
+      const re=new RegExp(eR(w),'g');const res=[];let m;
+      while((m=re.exec(text))!==null){
+        const before=text[m.index-1]||'';
+        // 直前が日本語文字にくっついている場合は複合語とみなしスキップ
+        // 例：「言い訳」の「訳」は前が「い」なのでスキップ
+        if(jpChar.test(before))continue;
+        res.push(m.index);
+      }
+      return res;
+    };
+    const posA=getOccurrences(a),posB=getOccurrences(b);
+    if(posA.length===0&&posB.length===0)return;
+    if(posA.length===0||posB.length===0)return; // 片方だけなら揺れなし
+    const mkSnips=(positions,w)=>positions.map(idx=>({pos:idx,word:w,ctx:text.slice(Math.max(0,idx-12),idx)+'【'+w+'】'+text.slice(idx+w.length,idx+w.length+12)}));
+    issues.push({type:'yure',wordA:a,wordB:b,countA:posA.length,countB:posB.length,
+      snippetsA:mkSnips(posA,a),snippetsB:mkSnips(posB,b),
+      message:'「'+a+'」('+posA.length+') と「'+b+'」('+posB.length+') が混在'});
   });
 
   // NG list: distance-based (直近X字以内に再登場したら警告)
@@ -317,13 +328,21 @@ function renderProof(text){
 
   // Highlighted text: プレースホルダ方式でspanを安全に埋め込む
   // 1) マーク位置を収集
+  const jpChar2=/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF]/;
   const marks=[];
   issues.forEach((is,i)=>{
     if(isIg(is))return;
     if(is.type==='yure'){
       [is.wordA,is.wordB].forEach(w=>{
         const alt=w===is.wordA?is.wordB:is.wordA;
-        let idx=0;while((idx=text.indexOf(w,idx))>=0){marks.push({start:idx,end:idx+w.length,cls:'hl-yure',di:i,w:w,alt:alt});idx+=w.length;}
+        let idx=0;
+        while((idx=text.indexOf(w,idx))>=0){
+          // 複合語除外：直前が日本語文字ならスキップ
+          if(!jpChar2.test(text[idx-1]||'')){
+            marks.push({start:idx,end:idx+w.length,cls:'hl-yure',di:i,w:w,alt:alt});
+          }
+          idx+=w.length;
+        }
       });
     }else if(is.type==='gobi'&&is.snippets){
       is.snippets.forEach(sn=>{let idx=0;while((idx=text.indexOf(sn,idx))>=0){marks.push({start:idx,end:idx+sn.length,cls:'hl-gobi',di:i});idx+=sn.length;}});
@@ -389,11 +408,12 @@ function togSnip(i){
 }
 function hlEl(el){el.style.outline='3px solid var(--primary)';el.style.outlineOffset='2px';setTimeout(()=>{el.style.outline='';el.style.outlineOffset='';},2000);}
 
-// Yure popup
+// 本文ハイライトタップ → 対応するチェックリスト項目へスクロール
 function sPop(e,el){
-  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,alt=el.dataset.alt,di=+el.dataset.i;
-  p.innerHTML='<div class="yure-popup-title">「'+w+'」をどうしますか？</div><button class="btn btn-primary btn-sm" onclick="repW(this)" data-from="'+eH(w)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">swap_horiz</span>全て「'+alt+'」に変更</button><button class="btn btn-secondary btn-sm" onclick="hPop();igIssue('+di+')"><span class="mi mi-xs">check</span>このまま（無視）</button>';
-  showPop(p,el);
+  e.stopPropagation();
+  const di=+el.dataset.i;
+  const item=document.getElementById('pi-'+di);
+  if(item){item.scrollIntoView({behavior:'smooth',block:'center'});hlEl(item);}
 }
 
 // スニペットクリック：編集ポップアップのみ（ジャンプはボタンから）
@@ -471,28 +491,30 @@ function snipSentEdit(origSent,pos){
     toast('文の位置がずれています');
   }
 }
-// NG popup (テキスト上のハイライトをクリック)
+// NG本文ハイライトタップ → 対応するチェックリスト項目へスクロール
 function nPop(e,el){
-  e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,di=+el.dataset.i,pos=+el.dataset.pos;
-  snipEditPop(e,el,w,pos,di);
+  e.stopPropagation();
+  const di=+el.dataset.i;
+  const item=document.getElementById('pi-'+di);
+  if(item){item.scrollIntoView({behavior:'smooth',block:'center'});hlEl(item);}
 }
 
+let _popActive=false;
 function showPop(p,el){
+  _popActive=true;
   p.style.display='block';p.style.left='0';p.style.top='-9999px';
-  // サイズ確定後に位置計算
   requestAnimationFrame(()=>{
+    if(!_popActive)return; // hPopが先に呼ばれていたらキャンセル
     const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph2=p.offsetHeight;
-    // 横：画面中央寄せ（モバイル）またはクリック位置
     let left=r.left;
     if(pw>=window.innerWidth-16){left=8;}
     else{left=Math.min(r.left,window.innerWidth-pw-8);if(left<8)left=8;}
-    // 縦：要素の下、収まらなければ上
     let top=r.bottom+8;
     if(top+ph2>window.innerHeight-8)top=Math.max(8,r.top-ph2-8);
     p.style.left=left+'px';p.style.top=top+'px';
   });
 }
-function hPop(){document.getElementById('yPop').style.display='none';}
+function hPop(){_popActive=false;const p=document.getElementById('yPop');p.style.display='none';p.style.top='-9999px';}
 function repW(btn){
   const from=btn.dataset.from,to=btn.dataset.to;hPop();
   const s=document.getElementById('srcEditor');
