@@ -312,7 +312,7 @@ function renderProof(text){
         texts.forEach(st=>{
           const enc=eH(st);
           const marked=enc.replace(new RegExp(eH(is.ending)+'$'),'<mark>'+eH(is.ending)+'</mark>');
-          h+='<div class="proof-snippet" onclick="event.stopPropagation();gobiSnipPop(event,this,\''+eH(st.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')" title="タップして編集">'+marked+'</div>';
+          h+='<div class="proof-snippet" onclick="event.stopPropagation();gobiSnipPop(event,this,\''+eH(st.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\','+i+')" title="タップして編集">'+marked+'</div>';
         });
       }else if(is.type==='yure'){
         [...(is.snippetsA||[]),...(is.snippetsB||[])].forEach(s=>{
@@ -501,7 +501,7 @@ function snipSentEdit(origSent,pos){
   }
 }
 // 語尾スニペットタップ → 文ごと書き換えポップアップ（チェック結果から）
-function gobiSnipPop(e,el,fmtSentence){
+function gobiSnipPop(e,el,fmtSentence,di){
   e.stopPropagation();
   const p=document.getElementById('yPop');
 
@@ -526,6 +526,9 @@ function gobiSnipPop(e,el,fmtSentence){
   html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
     +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
     +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(\''+eH(srcSentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+  if(di!=null){
+    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpTo('+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
+  }
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
   showPop(p,el);
