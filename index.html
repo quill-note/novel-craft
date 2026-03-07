@@ -100,7 +100,9 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <div class="setting-row" style="gap:8px;padding:0"><span style="font-size:13px">語尾連続：</span><select id="gobiSens"><option value="2">2回</option><option value="3" selected>3回</option></select></div>
 <div class="setting-row" style="gap:8px;padding:0;flex-wrap:wrap"><span style="font-size:13px">NG再登場距離：</span><select id="ngDist"><option value="1000">1000字以内</option><option value="2000" selected>2000字以内</option><option value="3000">3000字以内</option><option value="5000">5000字以内</option></select><span style="font-size:11px;color:var(--text3)">以内に同じ語が出たら警告</span></div>
 </div>
-<button class="btn btn-primary" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
+<div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px">
+<button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
+</div>
 <div class="proof-summary" id="proofSum" style="display:none"></div>
 <div class="output-area" id="proofText" style="display:none;margin-top:12px;line-height:2.2;min-height:300px"></div>
 </section>
