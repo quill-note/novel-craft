@@ -255,11 +255,7 @@ function runProof(){
       if(consecutive){
         let c=sens;while(i+c<paraSents.length&&paraSents[i+c].ending===paraSents[i].ending)c++;
         const snippets=paraSents.slice(i,i+c).map(s=>s.snippet);
-        const snippetTexts=paraSents.slice(i,i+c).map(s=>{
-          const result=findSrcSent(s.text);
-          console.log('[gobi]fmt:', JSON.stringify(s.text), '→src:', JSON.stringify(result));
-          return result;
-        });
+        const snippetTexts=paraSents.slice(i,i+c).map(s=>findSrcSent(s.text));
         issues.push({type:'gobi',ending:paraSents[i].ending,count:c,message:'「'+paraSents[i].ending+'」が'+c+'文連続',snippets:snippets,snippetTexts:snippetTexts});
         i+=c-1;
       }
@@ -818,12 +814,23 @@ function confCancel(){
   document.getElementById('confOvl').classList.remove('show');
   _confCallback=null;
   // 元のポップアップを再表示
-  if(_lastPopEl){
-    const p=document.getElementById('yPop');
-    if(p&&p.innerHTML)showPop(p,_lastPopEl);
-    setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta)ta.focus();},80);
-  }
+  const el=_lastPopEl;
   _lastPopEl=null;
+  if(el){
+    const p=document.getElementById('yPop');
+    if(p&&p.innerHTML){
+      _popActive=true; // requestAnimationFrameのガードを通過させる
+      p.style.display='block';p.style.left='0';p.style.top='-9999px';
+      requestAnimationFrame(()=>{
+        const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph=p.offsetHeight;
+        let left=pw>=window.innerWidth-16?8:Math.max(8,Math.min(r.left,window.innerWidth-pw-8));
+        let top=r.bottom+8;
+        if(top+ph>window.innerHeight-8)top=Math.max(8,r.top-ph-8);
+        p.style.left=left+'px';p.style.top=top+'px';
+      });
+      setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta)ta.focus();},80);
+    }
+  }
 }
 function toast(m,showProofBtn){
   const e=document.getElementById('toast');
