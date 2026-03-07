@@ -175,17 +175,27 @@ function runProof(){
   issues=[];ignored=new Set();
   const sens=+document.getElementById('gobiSens').value;
 
-  // Gobi: check consecutive sentences
+  // Gobi: check consecutive sentences (地の文のみ、会話文は除外)
   const allSents=[];
   text.split('\n').forEach(line=>{
     const trimmed=line.trim();
     if(!trimmed)return;
+    // 会話文（「〜」『〜』で始まる行）はスキップ
+    if(/^[「『]/.test(trimmed))return;
     // Split by sentence-ending punctuation, keeping track
     const parts=trimmed.split(/(?<=[。！？])/);
-    parts.forEach(p=>{const s=p.trim();if(s.length>=2){const ending=s.replace(/[。！？]+$/,'');if(ending.length>=2)allSents.push({ending:ending.slice(-2),text:s,snippet:ending.slice(-8)});}});
-    // Lines without punctuation count as one sentence
-    if(!parts.some(p=>/[。！？]/.test(p))&&trimmed.length>=2){
-      allSents.push({ending:trimmed.slice(-2),text:trimmed,snippet:trimmed.slice(-8)});
+    parts.forEach(p=>{
+      const s=p.trim();
+      if(s.length>=2){
+        // 会話文を含む部分もスキップ
+        if(/^[「『]/.test(s))return;
+        const body=s.replace(/[。！？]+$/,'');
+        if(body.length>=1)allSents.push({ending:body.slice(-1),text:s,snippet:body.slice(-8)});
+      }
+    });
+    // Lines without punctuation count as one sentence (会話文除く)
+    if(!parts.some(p=>/[。！？]/.test(p))&&trimmed.length>=2&&!/^[「『]/.test(trimmed)){
+      allSents.push({ending:trimmed.slice(-1),text:trimmed,snippet:trimmed.slice(-8)});
     }
   });
   // Check strictly consecutive
@@ -267,8 +277,10 @@ function sPop(e,el){
 function hPop(){document.getElementById('yPop').style.display='none';}
 function repW(btn){
   const from=btn.dataset.from,to=btn.dataset.to;hPop();
-  const s=document.getElementById('srcEditor'),idx=s.value.indexOf(from);
-  if(idx>=0){s.value=s.value.substring(0,idx)+to+s.value.substring(idx+from.length);upPrev();upCt();toast('「'+from+'」→「'+to+'」');runProof();}
+  const s=document.getElementById('srcEditor');
+  // 全箇所を一括置換
+  const newVal=s.value.split(from).join(to);
+  if(newVal!==s.value){s.value=newVal;upPrev();upCt();toast('「'+from+'」→「'+to+'」（全件置換）');runProof();}
 }
 
 // Rules
@@ -293,9 +305,9 @@ function runSplit(){
   if(cur.length)pts.push(cur.join('\n\n'));
   document.getElementById('spRes').innerHTML=pts.map((p,i)=>{
     const H=300,T=200;let ph;
-    if(p.length<=H+T+50){ph=eH(p);}
-    else{ph='<span class="split-label">▼ 先頭</span>\n'+eH(p.slice(0,H))+'</pre><div class="split-ellipsis">… 省略（'+(p.length-H-T).toLocaleString()+'字） …</div><pre><span class="split-label">▼ 末尾</span>\n'+eH(p.slice(-T));}
-    return '<div class="split-card"><div class="split-card-header"><h4>パート '+(i+1)+'/'+pts.length+'</h4><span>'+p.length.toLocaleString()+' 文字</span></div><pre>'+ph+'</pre><div class="btn-bar"><button class="btn btn-secondary btn-sm" onclick="cpSP('+i+')"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="exSP('+i+')"><span class="mi mi-xs">download</span>TXT</button></div></div>';
+    if(p.length<=H+T+50){ph='<pre>'+eH(p)+'</pre>';}
+    else{ph='<pre><span class="split-label">▼ 先頭</span>\n'+eH(p.slice(0,H))+'</pre><div class="split-ellipsis">… 省略（'+(p.length-H-T).toLocaleString()+'字） …</div><pre><span class="split-label">▼ 末尾</span>\n'+eH(p.slice(-T))+'</pre>';}
+    return '<div class="split-card"><div class="split-card-header"><h4>パート '+(i+1)+'/'+pts.length+'</h4><span>'+p.length.toLocaleString()+' 文字</span></div>'+ph+'<div class="btn-bar"><button class="btn btn-secondary btn-sm" onclick="cpSP('+i+')"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="exSP('+i+')"><span class="mi mi-xs">download</span>TXT</button></div></div>';
   }).join('');
   window._sp=pts;
 }
