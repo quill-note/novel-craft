@@ -358,11 +358,19 @@ function renderProof(text){
           h+='<div class="proof-snippet" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(s.word)+'\','+s.pos+','+i+')" title="タップして編集">…'+ctx+'…</div>';
         });
       }else if(is.type==='ng'){
+        // 重複なくすべての出現位置を順に表示
+        const shownPos=new Set();
         is.pairSnips.forEach(ps=>{
           const cF=eH(ps.ctxFrom).replace('【'+eH(is.word)+'】','<mark>'+eH(is.word)+'</mark>');
           const cT=eH(ps.ctxTo).replace('【'+eH(is.word)+'】','<mark>'+eH(is.word)+'</mark>');
-          h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.from+','+i+')" title="タップして編集">…'+cF+'…</div>';
-          h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.to+','+i+')" title="タップして編集（'+ps.dist+'字後）">↳ '+ps.dist+'字後　…'+cT+'…</div>';
+          if(!shownPos.has(ps.from)){
+            shownPos.add(ps.from);
+            h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.from+','+i+')" title="タップして編集">…'+cF+'…</div>';
+          }
+          if(!shownPos.has(ps.to)){
+            shownPos.add(ps.to);
+            h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.to+','+i+')" title="タップして編集（'+ps.dist+'字後）">↳ '+ps.dist+'字後　…'+cT+'…</div>';
+          }
         });
       }
       h+='</div>';
