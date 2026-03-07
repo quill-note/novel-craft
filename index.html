@@ -551,41 +551,58 @@ function snipEdit(word,pos,di){
     +'<span style="color:var(--text3);padding:0 6px">→</span>'
     +'<span style="color:var(--primary-dark);font-weight:600">'+eH(to)+'</span>'
     +'</div>';
-  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipEditCommit('+actualPos+',\''+eH(word)+'\')"><span class="mi mi-xs">check</span>確定して変更</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipEditBack(\''+eH(word)+'\',\''+eH(to)+'\','+pos+','+di+')"><span class="mi mi-xs">arrow_back</span>戻る</button>';
+  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipEditCommit()"><span class="mi mi-xs">check</span>確定して変更</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipEditBack()"><span class="mi mi-xs">arrow_back</span>戻る</button>';
   p.innerHTML=html;
   p.dataset.commitTo=to;
+  p.dataset.commitPos=actualPos;
+  p.dataset.commitWord=word;
+  p.dataset.commitOrigWord=word;
+  p.dataset.commitEditedWord=to;
+  p.dataset.commitSrcPos=pos;
+  p.dataset.commitDi=di;
 }
 // 1箇所変更確定
-function snipEditCommit(actualPos,word){
+function snipEditCommit(){
   const p=document.getElementById('yPop');
   const to=p.dataset.commitTo||'';
+  const actualPos=+p.dataset.commitPos;
+  const word=p.dataset.commitWord||'';
   const s=document.getElementById('srcEditor');
   hPop();
   s.value=s.value.slice(0,actualPos)+to+s.value.slice(actualPos+word.length);
   upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();
 }
 // 戻る → 入力欄に戻す
-function snipEditBack(word,edited,pos,di){
+function snipEditBack(){
   const p=document.getElementById('yPop');
+  const word=p.dataset.commitOrigWord||'';
+  const edited=p.dataset.commitEditedWord||'';
+  const pos=+p.dataset.commitSrcPos;
+  const di=+p.dataset.commitDi;
   const fmtText=fmt||document.getElementById('srcEditor').value;
   const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   html+='<div style="margin-bottom:6px">'
     +'<input class="input-text" id="snipEditVal" value="'+eH(edited)+'" style="width:100%;font-size:13px;margin-bottom:6px" placeholder="語句を変更">'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" data-word="'+eH(word)+'" data-pos="'+pos+'" data-di="'+di+'" onclick="snipEditFromData(this)"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
     +'</div>';
-  // 全件統一ボタンは issues から復元
   const is=issues[di];
   if(is&&is.type==='yure'){
     const alt=word===is.wordA?is.wordB:is.wordA;
     html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(word)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(alt)+'」に統一</button>';
     html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(alt)+'" data-to="'+eH(word)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(word)+'」に統一</button>';
   }
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpToPos('+pos+','+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" data-pos="'+pos+'" data-di="'+di+'" onclick="hPop();jumpToPos(+this.dataset.pos,+this.dataset.di)"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
   setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},50);
+}
+function snipEditFromData(btn){
+  const word=btn.dataset.word||'';
+  const pos=+btn.dataset.pos;
+  const di=+btn.dataset.di;
+  snipEdit(word,pos,di);
 }
 // 共通：原文から文を取得するヘルパー（キーワードの末尾N字で検索）
 function getSrcSentByKeyword(src, keyword, len){
@@ -738,8 +755,8 @@ function snipSentEditGobi(){
     +'<span style="color:var(--text3);text-decoration:line-through">'+eH(actualOrig)+'</span><br>'
     +'<span style="color:var(--primary-dark);font-weight:600">'+eH(to)+'</span>'
     +'</div>';
-  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentCommit('+idx+','+replaceLen+')"><span class="mi mi-xs">check</span>確定して書き換え</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipSentBack(\''+eH(origSent)+'\',\''+eH(to)+'\')"><span class="mi mi-xs">arrow_back</span>戻る</button>';
+  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentCommit()"><span class="mi mi-xs">check</span>確定して書き換え</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipSentBack()"><span class="mi mi-xs">arrow_back</span>戻る</button>';
   p.innerHTML=html;
   // 確定に必要なデータをdata属性で保持
   p.dataset.commitTo=to;
@@ -748,17 +765,21 @@ function snipSentEditGobi(){
   p.dataset.commitOrig=origSent;
 }
 // 書き換え確定
-function snipSentCommit(idx,len){
+function snipSentCommit(){
   const p=document.getElementById('yPop');
   const to=p.dataset.commitTo||'';
+  const idx=+p.dataset.commitIdx;
+  const len=+p.dataset.commitLen;
   const s=document.getElementById('srcEditor');
   hPop();
   s.value=s.value.slice(0,idx)+to+s.value.slice(idx+len);
   upPrev();upCt();toast('文を書き換えました',true);runProof();
 }
 // 戻る → textareaに戻す
-function snipSentBack(orig,edited){
+function snipSentBack(){
   const p=document.getElementById('yPop');
+  const orig=p.dataset.commitOrig||'';
+  const edited=p.dataset.commitTo||'';
   const prevTitle=p.querySelector('.yure-popup-title')?.outerHTML||'';
   let html=prevTitle;
   html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
