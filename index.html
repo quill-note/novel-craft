@@ -33,7 +33,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 .hl-yure{background:rgba(196,138,42,.18);border-bottom:2px solid var(--warn);border-radius:2px;cursor:pointer}.hl-yure:hover{background:rgba(196,138,42,.35)}
 .hl-gobi{background:rgba(232,123,107,.18);border-bottom:2px solid var(--primary);border-radius:2px}
 .hl-ng{background:rgba(91,143,212,.18);border-bottom:2px solid var(--info);border-radius:2px}
-.yure-popup{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 4px 16px var(--shadow);padding:12px;min-width:200px;max-width:280px;font-size:13px}.yure-popup-title{font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--font-mincho);line-height:1.6}.yure-popup-title mark{background:rgba(196,138,42,.25);color:var(--warn);border-radius:2px;font-style:normal;padding:0 2px}.yure-popup .btn{width:100%;justify-content:center;margin-bottom:6px}.yure-popup .btn:last-child{margin-bottom:0}
+.yure-popup{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 4px 16px var(--shadow);padding:12px;width:min(320px,calc(100vw - 16px));font-size:13px}.yure-popup-title{font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--font-mincho);line-height:1.6}.yure-popup-title mark{background:rgba(196,138,42,.25);color:var(--warn);border-radius:2px;font-style:normal;padding:0 2px}.yure-popup .btn{width:100%;justify-content:center;margin-bottom:6px}.yure-popup .btn:last-child{margin-bottom:0}
 .proof-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .proof-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px}
 .proof-badge.gobi{background:var(--primary-pale);color:var(--primary-dark)}.proof-badge.yure{background:var(--warnbg);color:var(--warn)}.proof-badge.ng{background:var(--info-pale);color:var(--info)}
@@ -394,22 +394,43 @@ function sPop(e,el){
   showPop(p,el);
 }
 
-// スニペットクリック：その1箇所だけ編集
+// スニペットクリック：ジャンプ＋編集ポップアップ
 function snipEditPop(e,el,word,pos,di){
   e.stopPropagation();
+  // まずテキスト本文のその位置へジャンプ
+  jumpToPos(pos,di);
+
   const p=document.getElementById('yPop');
   const src=document.getElementById('srcEditor').value;
-  // fmtとsrcの位置ずれがある可能性があるため、src上で該当語を探す
+  const is=issues[di];
+  const isNg=is&&is.type==='ng';
+
+  // 前後文脈（句点区切りで文を抽出）
+  const before=src.slice(Math.max(0,pos-60),pos);
+  const after=src.slice(pos+word.length,pos+word.length+60);
+  // 文の始まりを句点・改行で探す
+  const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('\n'))+1;
+  const sentEnd=after.search(/[。\n]/);
+  const sentence=before.slice(sentStart)+word+(sentEnd>=0?after.slice(0,sentEnd+1):after);
   const ctx='…'+eH(src.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(src.slice(pos+word.length,pos+word.length+12))+'…';
-  p.innerHTML='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>'
-    +'<div style="margin-bottom:8px;display:flex;gap:6px;align-items:center">'
-    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="flex:1;font-size:13px">'
-    +'<button class="btn btn-primary btn-sm" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>この1箇所</button>'
-    +'</div>'
-    +'<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipEditAll(\''+eH(word)+'\','+di+')"><span class="mi mi-xs">swap_horiz</span>全件変更</button>'
-    +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+
+  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
+  // 語句の置換
+  html+='<div style="margin-bottom:6px;display:flex;gap:6px;align-items:center">'
+    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="flex:1;font-size:13px;min-width:0" placeholder="語句を変更">'
+    +'<button class="btn btn-primary btn-sm" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>1箇所</button>'
+    +'<button class="btn btn-secondary btn-sm" onclick="snipEditAll(\''+eH(word)+'\','+di+')"><span class="mi mi-xs">swap_horiz</span>全件</button>'
+    +'</div>';
+  // NGの場合：文ごと編集エリア
+  if(isNg){
+    html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
+      +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(sentence)+'</textarea>'
+      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEdit(\''+eH(sentence.replace(/'/g,"\\'"))+'\','+pos+')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+  }
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+  p.innerHTML=html;
   showPop(p,el);
-  setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},50);
+  setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},80);
 }
 function snipEdit(word,pos,di){
   const to=document.getElementById('snipEditVal').value.trim();
@@ -432,6 +453,21 @@ function snipEditAll(word,di){
   s.value=s.value.split(word).join(to);
   upPrev();upCt();toast('「'+word+'」→「'+to+'」（全件）');runProof();
 }
+function snipSentEdit(origSent,pos){
+  const el=document.getElementById('snipSentVal');
+  if(!el)return;
+  const to=el.value;
+  if(!to||to===origSent){hPop();return;}
+  hPop();
+  const s=document.getElementById('srcEditor');
+  const idx=s.value.indexOf(origSent,Math.max(0,pos-30));
+  if(idx>=0){
+    s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
+    upPrev();upCt();toast('文を書き換えました');runProof();
+  }else{
+    toast('文の位置がずれています');
+  }
+}
 // NG popup (テキスト上のハイライトをクリック)
 function nPop(e,el){
   e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,di=+el.dataset.i,pos=+el.dataset.pos;
@@ -439,14 +475,19 @@ function nPop(e,el){
 }
 
 function showPop(p,el){
-  p.style.display='block';p.style.left='0';p.style.top='0';
-  const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph2=p.offsetHeight;
-  let left=r.left,top=r.bottom+8;
-  if(left+pw>window.innerWidth-8)left=window.innerWidth-pw-8;
-  if(left<8)left=8;
-  if(top+ph2>window.innerHeight-8)top=r.top-ph2-8;
-  if(top<8)top=8;
-  p.style.left=left+'px';p.style.top=top+'px';
+  p.style.display='block';p.style.left='0';p.style.top='-9999px';
+  // サイズ確定後に位置計算
+  requestAnimationFrame(()=>{
+    const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph2=p.offsetHeight;
+    // 横：画面中央寄せ（モバイル）またはクリック位置
+    let left=r.left;
+    if(pw>=window.innerWidth-16){left=8;}
+    else{left=Math.min(r.left,window.innerWidth-pw-8);if(left<8)left=8;}
+    // 縦：要素の下、収まらなければ上
+    let top=r.bottom+8;
+    if(top+ph2>window.innerHeight-8)top=Math.max(8,r.top-ph2-8);
+    p.style.left=left+'px';p.style.top=top+'px';
+  });
 }
 function hPop(){document.getElementById('yPop').style.display='none';}
 function repW(btn){
