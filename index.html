@@ -545,9 +545,13 @@ function resolveSrcSentence(fmtSentence){
   const stripped=fmtSentence.replace(/^[　\s]+/,'');
   let idx=src.indexOf(stripped);
   if(idx>=0){
-    const before=src.slice(Math.max(0,idx-20),idx);
-    const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
-    return {text:stripped,start:idx};
+    // 原文から文の実際の範囲を切り出す
+    const before=src.slice(Math.max(0,idx-5),idx);
+    const sentStart=idx; // strippedの先頭がそのまま文の始まり
+    const after=src.slice(idx+stripped.length,idx+stripped.length+30);
+    const sentEnd=after.search(/[。！？\n]/);
+    const text=stripped+(sentEnd>=0?after.slice(0,sentEnd+1):'');
+    return {text,start:sentStart};
   }
   // 2) キーワード長を変えて検索（20→15→10→6字）
   for(const len of [20,15,10,6]){
@@ -612,31 +616,21 @@ function snipSentEditGobi(){
   const to=ta.value;
   const origSent=ta.dataset.orig||'';
   if(!to||to===origSent){hPop();return;}
-  hPop();
+  // resolveSrcSentenceで位置を特定
   const s=document.getElementById('srcEditor');
   const src=s.value;
-  // 1) origSentそのまま
   let idx=src.indexOf(origSent);
-  if(idx>=0){
-    s.value=src.slice(0,idx)+to+src.slice(idx+origSent.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();return;
+  let replaceLen=origSent.length;
+  if(idx<0){
+    const found=resolveSrcSentence(origSent);
+    if(found){idx=found.start;replaceLen=found.text.length;}
   }
-  // 2) 字下げ除去
-  const stripped=origSent.replace(/^[　\s]+/,'');
-  idx=src.indexOf(stripped);
-  if(idx>=0){
-    s.value=src.slice(0,idx)+to+src.slice(idx+stripped.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();return;
-  }
-  // 3) キーワード再検索（長さを変えて複数回試行）
-  for(const len of [20,15,10,6]){
-    const found=getSrcSentByKeyword(src,origSent,len);
-    if(found&&found.text){
-      s.value=src.slice(0,found.start)+to+src.slice(found.start+found.text.length);
-      upPrev();upCt();toast('文を書き換えました',true);runProof();return;
-    }
-  }
-  toast('文の位置が見つかりません。チェックを再実行してください');
+  if(idx<0){toast('文の位置が見つかりません。チェックを再実行してください');return;}
+  hPop();
+  showConfirm('この文を書き換えますか？',
+    '<del>'+eH(origSent.slice(0,40))+(origSent.length>40?'…':'')+'</del><br><ins>'+eH(to.slice(0,40))+(to.length>40?'…':'')+'</ins>',
+    ()=>{s.value=src.slice(0,idx)+to+src.slice(idx+replaceLen);upPrev();upCt();toast('文を書き換えました',true);runProof();}
+  );
 }
 
 // NG本文ハイライトタップ → 語尾と同じ「文ごと書き換え」ポップアップ（該当箇所へボタンなし）
@@ -747,8 +741,9 @@ function eH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,
 function eR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 function toast(m,showProofBtn){
   const e=document.getElementById('toast');
+  const onProof=document.getElementById('panel-proofread')?.classList.contains('active');
   let html='<div class="toast-row"><span class="mi">check_circle</span><span>'+m+'</span></div>';
-  if(showProofBtn){html+='<button onclick="goProof()" style="width:100%;background:#fff;border:none;color:var(--primary-dark);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Hiragino Sans\',sans-serif">チェック結果へ →</button>';}
+  if(showProofBtn&&!onProof){html+='<button onclick="goProof()" style="width:100%;background:#fff;border:none;color:var(--primary-dark);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Hiragino Sans\',sans-serif">チェック結果へ →</button>';}
   e.innerHTML=html;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),4500);
 }
 function goProof(){
