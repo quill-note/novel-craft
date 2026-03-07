@@ -517,12 +517,12 @@ function snipEditPop(e,el,word,pos,di){
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   html+='<div style="margin-bottom:6px">'
     +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="width:100%;font-size:13px;margin-bottom:6px" placeholder="語句を変更">'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" data-word="'+eH(word)+'" data-pos="'+pos+'" data-di="'+di+'" onclick="snipEditFromBtn(this)"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" data-word="'+eH(word)+'" data-pos="'+pos+'" data-di="'+di+'" onclick="snipEditFromBtn(event,this)"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
     +'</div>';
   if(isNg){
     html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
       +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(sentence)+'</textarea>'
-      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
   }
   html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpToPos('+pos+','+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
@@ -532,7 +532,8 @@ function snipEditPop(e,el,word,pos,di){
   setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},80);
 }
 // data属性からword/pos/diを読んでsnipEditを呼ぶラッパー
-function snipEditFromBtn(btn){
+function snipEditFromBtn(e,btn){
+  if(e)e.stopPropagation();
   snipEdit(btn.dataset.word||'', +btn.dataset.pos, +btn.dataset.di);
 }
 function snipEdit(word,pos,di){
@@ -556,7 +557,7 @@ function snipEdit(word,pos,di){
     +'<span style="color:var(--primary-dark);font-weight:600">'+eH(to)+'</span>'
     +'</div>';
   html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipEditCommit()"><span class="mi mi-xs">check</span>確定して変更</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipEditBack()"><span class="mi mi-xs">arrow_back</span>戻る</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipEditBack(event)"><span class="mi mi-xs">arrow_back</span>戻る</button>';
   p.innerHTML=html;
   p.dataset.commitTo=to;
   p.dataset.commitPos=actualPos;
@@ -578,7 +579,8 @@ function snipEditCommit(){
   upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();
 }
 // 戻る → 入力欄に戻す
-function snipEditBack(){
+function snipEditBack(e){
+  if(e)e.stopPropagation();
   const p=document.getElementById('yPop');
   const word=p.dataset.commitOrigWord||'';
   const edited=p.dataset.commitEditedWord||'';
@@ -698,7 +700,7 @@ function gobiSnipPop(e,el,fmtSentence,di){
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">…'+ctx+'</div>';
   html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
     +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(displaySent)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
   if(di!=null){
     html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpTo('+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
   }
@@ -726,7 +728,7 @@ function gPop(e,el){
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
     +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(displaySent)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
   document.getElementById('snipSentVal').dataset.orig=displaySent;
@@ -735,7 +737,8 @@ function gPop(e,el){
 }
 
 // 語尾・NG用：書き換えプレビュー表示（ポップアップ内で切り替え）
-function snipSentEditGobi(){
+function snipSentEditGobi(e){
+  if(e)e.stopPropagation();
   const ta=document.getElementById('snipSentVal');
   if(!ta)return;
   const to=ta.value.trim();
@@ -750,7 +753,7 @@ function snipSentEditGobi(){
   if(idx<0){const found=resolveSrcSentence2(src,origSent);if(found){idx=found.start;replaceLen=found.text.length;}}
   // 見つからなくてもプレビューは表示する（確定時に再検索）
   const actualOrig=idx>=0?src.slice(idx,idx+replaceLen):origSent;
-  // ポップアップ内をプレビューに切り替え
+  // ポップアップ内をプレビューに切り替え（タイトルは書き換え前に取得）
   const p=document.getElementById('yPop');
   const prevTitle=p.querySelector('.yure-popup-title')?.outerHTML||'';
   let html=prevTitle;
@@ -759,8 +762,8 @@ function snipSentEditGobi(){
     +'<span style="color:var(--text3);text-decoration:line-through">'+eH(actualOrig)+'</span><br>'
     +'<span style="color:var(--primary-dark);font-weight:600">'+eH(to)+'</span>'
     +'</div>';
-  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentCommit()"><span class="mi mi-xs">check</span>確定して書き換え</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipSentBack()"><span class="mi mi-xs">arrow_back</span>戻る</button>';
+  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentCommit(event)"><span class="mi mi-xs">check</span>確定して書き換え</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipSentBack(event)"><span class="mi mi-xs">arrow_back</span>戻る</button>';
   p.innerHTML=html;
   // 確定に必要なデータをdata属性で保持
   p.dataset.commitTo=to;
@@ -769,7 +772,8 @@ function snipSentEditGobi(){
   p.dataset.commitOrig=origSent;
 }
 // 書き換え確定
-function snipSentCommit(){
+function snipSentCommit(e){
+  if(e)e.stopPropagation();
   const p=document.getElementById('yPop');
   const to=p.dataset.commitTo||'';
   let idx=+p.dataset.commitIdx;
@@ -793,7 +797,8 @@ function snipSentCommit(){
   upPrev();upCt();toast('文を書き換えました',true);runProof();
 }
 // 戻る → textareaに戻す
-function snipSentBack(){
+function snipSentBack(e){
+  if(e)e.stopPropagation();
   const p=document.getElementById('yPop');
   const orig=p.dataset.commitOrig||'';
   const edited=p.dataset.commitTo||'';
@@ -801,7 +806,7 @@ function snipSentBack(){
   let html=prevTitle;
   html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
     +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(edited)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>'
     +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
   document.getElementById('snipSentVal').dataset.orig=orig;
@@ -825,7 +830,7 @@ function nPop(e,el){
   let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
   html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
     +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(displaySent)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi()"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
   document.getElementById('snipSentVal').dataset.orig=displaySent;
