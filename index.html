@@ -175,40 +175,41 @@ function runProof(){
   issues=[];ignored=new Set();
   const sens=+document.getElementById('gobiSens').value;
 
-  // Gobi: check consecutive sentences (地の文のみ、会話文は除外)
-  const allSents=[];
-  text.split('\n').forEach(line=>{
-    const trimmed=line.trim();
-    if(!trimmed)return;
-    // 会話文（「〜」『〜』で始まる行）はスキップ
-    if(/^[「『]/.test(trimmed))return;
-    // Split by sentence-ending punctuation, keeping track
-    const parts=trimmed.split(/(?<=[。！？])/);
-    parts.forEach(p=>{
-      const s=p.trim();
-      if(s.length>=2){
-        // 会話文を含む部分もスキップ
-        if(/^[「『]/.test(s))return;
-        const body=s.replace(/[。！？]+$/,'');
-        if(body.length>=1)allSents.push({ending:body.slice(-1),text:s,snippet:body.slice(-8)});
+  // Gobi: check consecutive sentences (地の文のみ、段落内で連続するもの)
+  // 段落ごとにリセットして判定する
+  const paragraphs=text.split(/\n\n+/);
+  paragraphs.forEach(para=>{
+    const paraLines=para.split('\n');
+    const paraSents=[];
+    paraLines.forEach(line=>{
+      const trimmed=line.trim();
+      if(!trimmed)return;
+      if(/^[「『]/.test(trimmed))return;
+      const parts=trimmed.split(/(?<=[。！？])/);
+      parts.forEach(p=>{
+        const s=p.trim();
+        if(s.length>=2){
+          if(/^[「『]/.test(s))return;
+          const body=s.replace(/[。！？]+$/,'');
+          if(body.length>=1)paraSents.push({ending:body.slice(-1),text:s,snippet:body.slice(-8)});
+        }
+      });
+      if(!parts.some(p=>/[。！？]/.test(p))&&trimmed.length>=2&&!/^[「『]/.test(trimmed)){
+        paraSents.push({ending:trimmed.slice(-1),text:trimmed,snippet:trimmed.slice(-8)});
       }
     });
-    // Lines without punctuation count as one sentence (会話文除く)
-    if(!parts.some(p=>/[。！？]/.test(p))&&trimmed.length>=2&&!/^[「『]/.test(trimmed)){
-      allSents.push({ending:trimmed.slice(-1),text:trimmed,snippet:trimmed.slice(-8)});
+    // 段落内で連続チェック
+    for(let i=0;i<=paraSents.length-sens;i++){
+      let consecutive=true;
+      for(let j=1;j<sens;j++){if(paraSents[i+j].ending!==paraSents[i].ending){consecutive=false;break;}}
+      if(consecutive){
+        let c=sens;while(i+c<paraSents.length&&paraSents[i+c].ending===paraSents[i].ending)c++;
+        const snippets=paraSents.slice(i,i+c).map(s=>s.snippet);
+        issues.push({type:'gobi',ending:paraSents[i].ending,count:c,message:'「'+paraSents[i].ending+'」が'+c+'文連続',snippets:snippets});
+        i+=c-1;
+      }
     }
   });
-  // Check strictly consecutive
-  for(let i=0;i<=allSents.length-sens;i++){
-    let consecutive=true;
-    for(let j=1;j<sens;j++){if(allSents[i+j].ending!==allSents[i].ending){consecutive=false;break;}}
-    if(consecutive){
-      let c=sens;while(i+c<allSents.length&&allSents[i+c].ending===allSents[i].ending)c++;
-      const snippets=allSents.slice(i,i+c).map(s=>s.snippet);
-      issues.push({type:'gobi',ending:allSents[i].ending,count:c,message:'「'+allSents[i].ending+'」が'+c+'文連続',snippets:snippets});
-      i+=c-1;
-    }
-  }
 
   // Yure
   yureRules.forEach(([a,b])=>{if(text.includes(a)&&text.includes(b)){const cA=(text.match(new RegExp(eR(a),'g'))||[]).length,cB=(text.match(new RegExp(eR(b),'g'))||[]).length;issues.push({type:'yure',wordA:a,wordB:b,countA:cA,countB:cB,message:'「'+a+'」('+cA+') と「'+b+'」('+cB+') が混在'});}});
@@ -238,8 +239,10 @@ function renderProof(text){
 
   issues.forEach((is,i)=>{
     const ig=isIg(is);
-    h+='<div class="proof-item'+(ig?' ignored':'')+'" onclick="jumpTo('+i+')"><span class="proof-tag '+is.type+'">'+(({gobi:'語尾',yure:'表記ゆれ',ng:'NG'})[is.type])+'</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+is.message+'</span>';
-    if(!ig)h+='<span class="proof-actions"><button class="btn-icon" title="無視" onclick="event.stopPropagation();igIssue('+i+')"><span class="mi" style="font-size:14px">visibility_off</span></button></span>';
+    h+='<div class="proof-item'+(ig?' ignored':'')+'" onclick="jumpTo('+i+')">';
+    h+='<span class="proof-tag '+is.type+'">'+(({gobi:'語尾',yure:'表記ゆれ',ng:'NG'})[is.type])+'</span>';
+    h+='<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+is.message+'</span>';
+    h+='<span class="proof-actions"><button class="btn-icon" title="'+(ig?'復元':'無視')+'" onclick="event.stopPropagation();igIssue('+i+')"><span class="mi" style="font-size:14px">'+(ig?'visibility':'visibility_off')+'</span></button></span>';
     h+='</div>';
   });
   sum.innerHTML=h;sum.style.display='block';
@@ -261,18 +264,30 @@ function renderProof(text){
 }
 
 function isIg(is){return ignored.has(is.type+'|'+(is.wordA||is.word||is.ending||''));}
-function igIssue(i){const is=issues[i];ignored.add(is.type+'|'+(is.wordA||is.word||is.ending||''));renderProof(fmt||document.getElementById('srcEditor').value);toast('無視しました');}
+function igIssue(i){
+  const is=issues[i];
+  const key=is.type+'|'+(is.wordA||is.word||is.ending||'');
+  if(ignored.has(key)){ignored.delete(key);toast('復元しました');}
+  else{ignored.add(key);toast('無視しました');}
+  renderProof(fmt||document.getElementById('srcEditor').value);
+}
 function resetIg(){ignored=new Set();renderProof(fmt||document.getElementById('srcEditor').value);toast('リセットしました');}
 function jumpTo(i){const el=document.querySelector('[data-i="'+i+'"]');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.outline='3px solid var(--primary)';el.style.outlineOffset='2px';setTimeout(()=>{el.style.outline='';el.style.outlineOffset='';},2000);}}
 
 // Yure popup
 function sPop(e,el){
   e.stopPropagation();const p=document.getElementById('yPop'),w=el.dataset.w,alt=el.dataset.alt;
-  p.innerHTML='<div class="yure-popup-title">「'+w+'」をどうしますか？</div><button class="btn btn-primary btn-sm" onclick="repW(this)" data-from="'+eH(w)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">swap_horiz</span>「'+alt+'」に変更</button><button class="btn btn-secondary btn-sm" onclick="hPop()"><span class="mi mi-xs">check</span>このまま</button>';
-  const r=el.getBoundingClientRect();p.style.display='block';
-  p.style.left=Math.min(r.left,window.innerWidth-220)+'px';
-  p.style.top=(r.bottom+8)+'px';
-  if(r.bottom+120>window.innerHeight)p.style.top=(r.top-p.offsetHeight-8)+'px';
+  p.innerHTML='<div class="yure-popup-title">「'+w+'」をどうしますか？</div><button class="btn btn-primary btn-sm" onclick="repW(this)" data-from="'+eH(w)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">swap_horiz</span>全て「'+alt+'」に変更</button><button class="btn btn-secondary btn-sm" onclick="hPop()"><span class="mi mi-xs">check</span>このまま</button>';
+  p.style.display='block';
+  // 位置をリセットしてサイズ計算
+  p.style.left='0';p.style.top='0';
+  const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph2=p.offsetHeight;
+  let left=r.left,top=r.bottom+8;
+  if(left+pw>window.innerWidth-8)left=window.innerWidth-pw-8;
+  if(left<8)left=8;
+  if(top+ph2>window.innerHeight-8)top=r.top-ph2-8;
+  if(top<8)top=8;
+  p.style.left=left+'px';p.style.top=top+'px';
 }
 function hPop(){document.getElementById('yPop').style.display='none';}
 function repW(btn){
@@ -306,7 +321,18 @@ function runSplit(){
   document.getElementById('spRes').innerHTML=pts.map((p,i)=>{
     const H=300,T=200;let ph;
     if(p.length<=H+T+50){ph='<pre>'+eH(p)+'</pre>';}
-    else{ph='<pre><span class="split-label">▼ 先頭</span>\n'+eH(p.slice(0,H))+'</pre><div class="split-ellipsis">… 省略（'+(p.length-H-T).toLocaleString()+'字） …</div><pre><span class="split-label">▼ 末尾</span>\n'+eH(p.slice(-T))+'</pre>';}
+    else{
+      // 先頭: 300字以降で最初の。まで
+      let headEnd=H;
+      const headSearch=p.indexOf('。',H);
+      if(headSearch>=0&&headSearch<H+100)headEnd=headSearch+1;
+      // 末尾: 末尾200字より前で最初の。から
+      let tailStart=p.length-T;
+      const tailSearch=p.lastIndexOf('。',tailStart);
+      if(tailSearch>=0&&tailSearch>p.length-T-100)tailStart=tailSearch+1;
+      const omit=tailStart-headEnd;
+      ph='<pre><span class="split-label">▼ 先頭</span>\n'+eH(p.slice(0,headEnd))+'</pre><div class="split-ellipsis">… 省略（'+omit.toLocaleString()+'字） …</div><pre><span class="split-label">▼ 末尾</span>\n'+eH(p.slice(tailStart))+'</pre>';
+    }
     return '<div class="split-card"><div class="split-card-header"><h4>パート '+(i+1)+'/'+pts.length+'</h4><span>'+p.length.toLocaleString()+' 文字</span></div>'+ph+'<div class="btn-bar"><button class="btn btn-secondary btn-sm" onclick="cpSP('+i+')"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="exSP('+i+')"><span class="mi mi-xs">download</span>TXT</button></div></div>';
   }).join('');
   window._sp=pts;
