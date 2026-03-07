@@ -52,6 +52,16 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--primary-dark);color:#fff;padding:12px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(201,88,74,.45);transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;opacity:0;z-index:600;pointer-events:none;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px)}.toast .mi{font-size:18px;flex-shrink:0}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
 .mobile-btn{display:none}
 @media(max-width:768px){.editor-layout{grid-template-columns:1fr}.desktop-col{display:none}.mobile-btn{display:inline-flex}.header-inner{flex-direction:column;align-items:flex-start}.tab-nav{padding:8px 16px 0;overflow-x:auto}.tab-btn{padding:8px 14px;font-size:12px;white-space:nowrap}.main{padding:0 16px 32px}.tab-panel{padding:16px}textarea{min-height:300px}.split-settings{flex-direction:column;align-items:stretch}}
+
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(74,37,37,.45);z-index:600;align-items:center;justify-content:center;padding:16px}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:var(--surface);border-radius:var(--radius-lg);padding:20px;width:min(320px,calc(100vw - 32px));box-shadow:0 8px 32px var(--shadow)}
+.confirm-box p{font-size:13px;color:var(--text);margin-bottom:6px;line-height:1.6}
+.confirm-box .confirm-preview{font-family:var(--font-mincho);font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:14px;line-height:1.7;max-height:80px;overflow-y:auto;word-break:break-all}
+.confirm-box .confirm-preview del{color:var(--text3);text-decoration:line-through}
+.confirm-box .confirm-preview ins{color:var(--primary-dark);text-decoration:none;font-weight:700}
+.confirm-btns{display:flex;gap:8px}
+.confirm-btns .btn{flex:1;justify-content:center}
 </style>
 </head>
 <body>
@@ -120,6 +130,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 
 <div class="modal-overlay" id="mOvl" onclick="if(event.target===this)closeMod()"><div class="modal-panel"><div class="modal-header"><h3 id="mTitle"></h3><button class="modal-close" onclick="closeMod()"><span class="mi">close</span></button></div><div id="mCont"></div></div></div>
 <div class="yure-popup" id="yPop" style="display:none"></div>
+<div class="confirm-overlay" id="confOvl"><div class="confirm-box"><p id="confMsg"></p><div class="confirm-preview" id="confPrev"></div><div class="confirm-btns"><button class="btn btn-secondary btn-sm" onclick="confCancel()"><span class="mi mi-xs">close</span>キャンセル</button><button class="btn btn-primary btn-sm" id="confOkBtn" onclick="confOk()"><span class="mi mi-xs">check</span>書き換える</button></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -479,21 +490,18 @@ function snipEditPop(e,el,word,pos,di){
 function snipEdit(word,pos,di){
   const to=document.getElementById('snipEditVal').value.trim();
   if(!to||to===word){hPop();return;}
-  hPop();
   const s=document.getElementById('srcEditor');
   const src=s.value;
-  // 完成版posは参考値として、原文から近傍±200字で該当wordを検索
   const searchFrom=Math.max(0,pos-200);
-  const searchTo=Math.min(src.length,pos+200);
-  const searchArea=src.slice(searchFrom,searchTo);
+  const searchArea=src.slice(searchFrom,Math.min(src.length,pos+200));
   const localIdx=searchArea.indexOf(word);
-  if(localIdx>=0){
-    const actualPos=searchFrom+localIdx;
-    s.value=src.slice(0,actualPos)+to+src.slice(actualPos+word.length);
-    upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();
-  }else{
-    toast('位置がずれています。チェックを再実行してください');
-  }
+  if(localIdx<0){toast('位置がずれています。チェックを再実行してください');return;}
+  const actualPos=searchFrom+localIdx;
+  hPop();
+  showConfirm('この1箇所を書き換えますか？',
+    '<del>'+eH(word)+'</del> → <ins>'+eH(to)+'</ins>',
+    ()=>{s.value=src.slice(0,actualPos)+to+src.slice(actualPos+word.length);upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();}
+  );
 }
 function snipEditAll(word,di){
   const to=document.getElementById('snipEditVal').value.trim();
@@ -509,17 +517,15 @@ function snipSentEdit(pos){
   const to=ta.value;
   const origSent=ta.dataset.orig||'';
   if(!to||to===origSent){hPop();return;}
-  hPop();
   const s=document.getElementById('srcEditor');
-  // posヒントで近傍検索、なければ全文検索
   let idx=origSent?s.value.indexOf(origSent,Math.max(0,pos-30)):-1;
   if(idx<0&&origSent)idx=s.value.indexOf(origSent);
-  if(idx>=0){
-    s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();
-  }else{
-    toast('文の位置がずれています。チェックを再実行してください');
-  }
+  if(idx<0){toast('文の位置がずれています。チェックを再実行してください');return;}
+  hPop();
+  showConfirm('この文を書き換えますか？',
+    '<del>'+eH(origSent.slice(0,40))+(origSent.length>40?'…':'')+'</del><br><ins>'+eH(to.slice(0,40))+(to.length>40?'…':'')+'</ins>',
+    ()=>{s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);upPrev();upCt();toast('文を書き換えました',true);runProof();}
+  );
 }
 // 共通：原文から文を取得するヘルパー（キーワードの末尾N字で検索）
 function getSrcSentByKeyword(src, keyword, len){
@@ -612,31 +618,28 @@ function snipSentEditGobi(){
   const to=ta.value;
   const origSent=ta.dataset.orig||'';
   if(!to||to===origSent){hPop();return;}
-  hPop();
   const s=document.getElementById('srcEditor');
   const src=s.value;
-  // 1) origSentそのまま
+  // 検索処理（確認前に位置を特定）
   let idx=src.indexOf(origSent);
-  if(idx>=0){
-    s.value=src.slice(0,idx)+to+src.slice(idx+origSent.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();return;
+  let replaceLen=origSent.length;
+  if(idx<0){
+    const stripped=origSent.replace(/^[　\s]+/,'');
+    idx=src.indexOf(stripped);
+    if(idx>=0)replaceLen=stripped.length;
   }
-  // 2) 字下げ除去
-  const stripped=origSent.replace(/^[　\s]+/,'');
-  idx=src.indexOf(stripped);
-  if(idx>=0){
-    s.value=src.slice(0,idx)+to+src.slice(idx+stripped.length);
-    upPrev();upCt();toast('文を書き換えました',true);runProof();return;
-  }
-  // 3) キーワード再検索（長さを変えて複数回試行）
-  for(const len of [20,15,10,6]){
-    const found=getSrcSentByKeyword(src,origSent,len);
-    if(found&&found.text){
-      s.value=src.slice(0,found.start)+to+src.slice(found.start+found.text.length);
-      upPrev();upCt();toast('文を書き換えました',true);runProof();return;
+  if(idx<0){
+    for(const len of [20,15,10,6]){
+      const found=getSrcSentByKeyword(src,origSent,len);
+      if(found&&found.text){idx=found.start;replaceLen=found.text.length;break;}
     }
   }
-  toast('文の位置が見つかりません。チェックを再実行してください');
+  if(idx<0){toast('文の位置が見つかりません。チェックを再実行してください');return;}
+  hPop();
+  showConfirm('この文を書き換えますか？',
+    '<del>'+eH(origSent.slice(0,40))+(origSent.length>40?'…':'')+'</del><br><ins>'+eH(to.slice(0,40))+(to.length>40?'…':'')+'</ins>',
+    ()=>{s.value=src.slice(0,idx)+to+src.slice(idx+replaceLen);upPrev();upCt();toast('文を書き換えました',true);runProof();}
+  );
 }
 
 // NG本文ハイライトタップ → 語尾と同じ「文ごと書き換え」ポップアップ（該当箇所へボタンなし）
@@ -745,6 +748,22 @@ function cpOut(){navigator.clipboard.writeText(fmt);toast('コピー');}
 
 function eH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function eR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+let _confCallback=null;
+function showConfirm(msg, preview, cb){
+  document.getElementById('confMsg').textContent=msg;
+  document.getElementById('confPrev').innerHTML=preview;
+  _confCallback=cb;
+  document.getElementById('confOvl').classList.add('show');
+}
+function confOk(){
+  document.getElementById('confOvl').classList.remove('show');
+  if(_confCallback){_confCallback();_confCallback=null;}
+}
+function confCancel(){
+  document.getElementById('confOvl').classList.remove('show');
+  _confCallback=null;
+}
+
 function toast(m,showProofBtn){
   const e=document.getElementById('toast');
   let html='<span class="mi" style="font-size:18px">check_circle</span><span style="flex:1">'+m+'</span>';
