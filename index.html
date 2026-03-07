@@ -590,12 +590,10 @@ function getSrcSentByKeyword(src, keyword, len){
   const idx=src.indexOf(kw);
   if(idx<0)return null;
   const before=src.slice(Math.max(0,idx-120),idx+kw.length);
-  const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('
-'))+1;
+  const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
   const afterIdx=idx+kw.length;
   const after=src.slice(afterIdx,afterIdx+60);
-  const sentEnd=after.search(/[。！？
-]/);
+  const sentEnd=after.search(/[。！？\n]/);
   return {
     text: before.slice(sentStart)+(sentEnd>=0?after.slice(0,sentEnd+1):after),
     start: Math.max(0,idx-120)+sentStart
