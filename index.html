@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   yureRules=lj('novelcraft_yure')||[...D_YURE];rYure();
   ngRules=lj('novelcraft_ng')||[...D_NG];rNg();
   rubyRules=lj('novelcraft_ruby')||[];rRuby();
-  document.addEventListener('click',e=>{if(!e.target.closest('.yure-popup')&&!e.target.closest('.hl-yure'))hPop();});
+  document.addEventListener('click',e=>{if(!e.target.closest('.yure-popup')&&!e.target.closest('.hl-yure')&&!e.target.closest('.hl-gobi')&&!e.target.closest('.hl-ng'))hPop();});
 });
 function ls(k){return localStorage.getItem(k)}
 function lj(k){try{const v=ls(k);return v?JSON.parse(v):null}catch(e){return null}}
@@ -215,22 +215,18 @@ function runProof(){
       if(consecutive){
         let c=sens;while(i+c<paraSents.length&&paraSents[i+c].ending===paraSents[i].ending)c++;
         const snippets=paraSents.slice(i,i+c).map(s=>s.snippet);
-        issues.push({type:'gobi',ending:paraSents[i].ending,count:c,message:'「'+paraSents[i].ending+'」が'+c+'文連続',snippets:snippets});
+        const snippetTexts=paraSents.slice(i,i+c).map(s=>s.text);
+        issues.push({type:'gobi',ending:paraSents[i].ending,count:c,message:'「'+paraSents[i].ending+'」が'+c+'文連続',snippets:snippets,snippetTexts:snippetTexts});
         i+=c-1;
       }
     }
   });
 
-  // Yure: 前が漢字・ひらがな・カタカナでない位置のみマッチ（複合語除外）
-  const jpChar=/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF]/;
+  // Yure: 除外なし（文中どこにあっても全部検出）
   yureRules.forEach(([a,b])=>{
     const getOccurrences=(w)=>{
       const re=new RegExp(eR(w),'g');const res=[];let m;
       while((m=re.exec(text))!==null){
-        const before=text[m.index-1]||'';
-        // 直前が日本語文字にくっついている場合は複合語とみなしスキップ
-        // 例：「言い訳」の「訳」は前が「い」なのでスキップ
-        if(jpChar.test(before))continue;
         res.push(m.index);
       }
       return res;
@@ -289,7 +285,11 @@ function renderProof(text){
 
   issues.forEach((is,i)=>{
     const ig=isIg(is);
-    const hasSnips=!ig&&((is.type==='yure'&&(is.snippetsA||is.snippetsB))||(is.type==='ng'&&is.pairSnips));
+    const hasSnips=!ig&&(
+      (is.type==='yure'&&(is.snippetsA||is.snippetsB))||
+      (is.type==='ng'&&is.pairSnips&&is.pairSnips.length)||
+      (is.type==='gobi'&&((is.snippetTexts&&is.snippetTexts.length)||(is.snippets&&is.snippets.length)))
+    );
     // 項目タップ：スニペットあり→展開/折りたたみ、なし→ジャンプ
     const clickAct=hasSnips?'togSnip('+i+')':'jumpTo('+i+')';
     h+='<div class="proof-item'+(ig?' ignored':'')+'" id="pi-'+i+'" onclick="'+clickAct+'" style="flex-wrap:wrap;cursor:'+(ig?'default':'pointer')+'">';
@@ -307,7 +307,14 @@ function renderProof(text){
     h+='</span>';
     if(hasSnips){
       h+='<div class="proof-snippets" id="pi-snip-'+i+'" style="width:100%;display:none">';
-      if(is.type==='yure'){
+      if(is.type==='gobi'){
+        const texts=is.snippetTexts&&is.snippetTexts.length?is.snippetTexts:is.snippets||[];
+        texts.forEach(st=>{
+          const enc=eH(st);
+          const marked=enc.replace(new RegExp(eH(is.ending)+'$'),'<mark>'+eH(is.ending)+'</mark>');
+          h+='<div class="proof-snippet" onclick="event.stopPropagation();gobiSnipPop(event,this,\''+eH(st.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')" title="タップして編集">'+marked+'</div>';
+        });
+      }else if(is.type==='yure'){
         [...(is.snippetsA||[]),...(is.snippetsB||[])].forEach(s=>{
           const ctx=eH(s.ctx).replace('【'+eH(s.word)+'】','<mark>'+eH(s.word)+'</mark>');
           h+='<div class="proof-snippet" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(s.word)+'\','+s.pos+','+i+')" title="タップして編集">…'+ctx+'…</div>';
@@ -328,7 +335,6 @@ function renderProof(text){
 
   // Highlighted text: プレースホルダ方式でspanを安全に埋め込む
   // 1) マーク位置を収集
-  const jpChar2=/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF]/;
   const marks=[];
   issues.forEach((is,i)=>{
     if(isIg(is))return;
@@ -337,10 +343,7 @@ function renderProof(text){
         const alt=w===is.wordA?is.wordB:is.wordA;
         let idx=0;
         while((idx=text.indexOf(w,idx))>=0){
-          // 複合語除外：直前が日本語文字ならスキップ
-          if(!jpChar2.test(text[idx-1]||'')){
-            marks.push({start:idx,end:idx+w.length,cls:'hl-yure',di:i,w:w,alt:alt});
-          }
+          marks.push({start:idx,end:idx+w.length,cls:'hl-yure',di:i,w:w,alt:alt});
           idx+=w.length;
         }
       });
@@ -364,7 +367,7 @@ function renderProof(text){
     if(m.cls==='hl-yure'){
       html+='<span class="hl-yure" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(m.w)+'" data-alt="'+eH(m.alt)+'" onclick="sPop(event,this)">'+inner+'</span>';
     }else if(m.cls==='hl-gobi'){
-      html+='<span class="hl-gobi" data-i="'+m.di+'" data-pos="'+m.start+'">'+inner+'</span>';
+      html+='<span class="hl-gobi" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(text.slice(m.start,m.end))+'" onclick="gPop(event,this)">'+inner+'</span>';
     }else{
       html+='<span class="hl-ng" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(text.slice(m.start,m.end))+'" onclick="nPop(event,this)">'+inner+'</span>';
     }
@@ -460,9 +463,15 @@ function snipEdit(word,pos,di){
   if(!to||to===word){hPop();return;}
   hPop();
   const s=document.getElementById('srcEditor');
-  // pos位置のwordだけ置換
-  if(s.value.slice(pos,pos+word.length)===word){
-    s.value=s.value.slice(0,pos)+to+s.value.slice(pos+word.length);
+  const src=s.value;
+  // 完成版posは参考値として、原文から近傍±200字で該当wordを検索
+  const searchFrom=Math.max(0,pos-200);
+  const searchTo=Math.min(src.length,pos+200);
+  const searchArea=src.slice(searchFrom,searchTo);
+  const localIdx=searchArea.indexOf(word);
+  if(localIdx>=0){
+    const actualPos=searchFrom+localIdx;
+    s.value=src.slice(0,actualPos)+to+src.slice(actualPos+word.length);
     upPrev();upCt();toast('1箇所を「'+to+'」に変更');runProof();
   }else{
     toast('位置がずれています。全件変更をお試しください');
@@ -491,12 +500,129 @@ function snipSentEdit(origSent,pos){
     toast('文の位置がずれています');
   }
 }
-// NG本文ハイライトタップ → 対応するチェックリスト項目へスクロール
+// 語尾スニペットタップ → 文ごと書き換えポップアップ（チェック結果から）
+function gobiSnipPop(e,el,fmtSentence){
+  e.stopPropagation();
+  const p=document.getElementById('yPop');
+
+  // 完成版の文末尾キーワードで原文を検索して原文ベースの文を取得
+  const src=document.getElementById('srcEditor').value;
+  const keyword=fmtSentence.replace(/^　/,'').replace(/[。！？\s　]+$/,'').slice(-12);
+  let srcSentence=fmtSentence.replace(/^　/,''); // デフォルト：字下げだけ除去
+  if(keyword){
+    const idx=src.indexOf(keyword);
+    if(idx>=0){
+      const before=src.slice(Math.max(0,idx-100),idx+keyword.length);
+      const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
+      const afterIdx=idx+keyword.length;
+      const after=src.slice(afterIdx,afterIdx+30);
+      const sentEnd=after.search(/[。！？\n]/);
+      srcSentence=before.slice(sentStart)+(sentEnd>=0?after.slice(0,sentEnd+1):after);
+    }
+  }
+
+  const ctx=eH(fmtSentence.slice(-20));
+  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">…'+ctx+'</div>';
+  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
+    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(\''+eH(srcSentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+  p.innerHTML=html;
+  showPop(p,el);
+  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
+}
+
+// 語尾本文ハイライトタップ → NGと同じ「文ごと書き換え」ポップアップを表示
+function gPop(e,el){
+  e.stopPropagation();
+  const pos=+el.dataset.pos;
+  const word=el.dataset.w||el.textContent;
+
+  const p=document.getElementById('yPop');
+  // 完成版テキストから文を抽出（posは完成版上の位置）
+  const fmtText=fmt||document.getElementById('srcEditor').value;
+  const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
+  const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
+  const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
+  const fSentEnd=fAfter.search(/[。\n]/);
+  const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
+
+  // 原文から同じ文を検索（完成版と原文で文字が変わる可能性があるので、wordを手がかりに近傍検索）
+  const src=document.getElementById('srcEditor').value;
+  let srcSentence=fmtSentence; // デフォルトは完成版の文
+  const srcIdx=src.indexOf(word);
+  if(srcIdx>=0){
+    const sBefore=src.slice(Math.max(0,srcIdx-60),srcIdx);
+    const sAfter=src.slice(srcIdx+word.length,srcIdx+word.length+60);
+    const sSentStart=Math.max(sBefore.lastIndexOf('。'),sBefore.lastIndexOf('\n'))+1;
+    const sSentEnd=sAfter.search(/[。\n]/);
+    srcSentence=sBefore.slice(sSentStart)+word+(sSentEnd>=0?sAfter.slice(0,sSentEnd+1):sAfter);
+  }
+
+  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
+
+  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
+  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
+    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(\''+eH(srcSentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+  p.innerHTML=html;
+  showPop(p,el);
+  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
+}
+// 語尾用：原文から文字列検索して書き換え（pos不要）
+function snipSentEditGobi(origSent){
+  const el=document.getElementById('snipSentVal');
+  if(!el)return;
+  const to=el.value;
+  if(!to||to===origSent){hPop();return;}
+  hPop();
+  const s=document.getElementById('srcEditor');
+  const idx=s.value.indexOf(origSent);
+  if(idx>=0){
+    s.value=s.value.slice(0,idx)+to+s.value.slice(idx+origSent.length);
+    upPrev();upCt();toast('文を書き換えました');runProof();
+  }else{
+    toast('文の位置が見つかりません');
+  }
+}
+
+// NG本文ハイライトタップ → 語尾と同じ「文ごと書き換え」ポップアップ（該当箇所へボタンなし）
 function nPop(e,el){
   e.stopPropagation();
-  const di=+el.dataset.i;
-  const item=document.getElementById('pi-'+di);
-  if(item){item.scrollIntoView({behavior:'smooth',block:'center'});hlEl(item);}
+  const pos=+el.dataset.pos;
+  const word=el.dataset.w||el.textContent;
+
+  const p=document.getElementById('yPop');
+  const fmtText=fmt||document.getElementById('srcEditor').value;
+  const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
+  const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
+  const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
+  const fSentEnd=fAfter.search(/[。\n]/);
+  const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
+
+  // 原文からwordで近傍検索
+  const src=document.getElementById('srcEditor').value;
+  let srcSentence=fmtSentence;
+  const srcIdx=src.indexOf(word);
+  if(srcIdx>=0){
+    const sBefore=src.slice(Math.max(0,srcIdx-60),srcIdx);
+    const sAfter=src.slice(srcIdx+word.length,srcIdx+word.length+60);
+    const sSentStart=Math.max(sBefore.lastIndexOf('。'),sBefore.lastIndexOf('\n'))+1;
+    const sSentEnd=sAfter.search(/[。\n]/);
+    srcSentence=sBefore.slice(sSentStart)+word+(sSentEnd>=0?sAfter.slice(0,sSentEnd+1):sAfter);
+  }
+
+  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
+
+  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
+  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
+    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(srcSentence)+'</textarea>'
+    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(\''+eH(srcSentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
+  p.innerHTML=html;
+  showPop(p,el);
+  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
 }
 
 let _popActive=false;
