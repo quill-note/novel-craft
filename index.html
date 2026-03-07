@@ -184,8 +184,44 @@ function formatDirect(){document.getElementById('srcEditor').value=fmtT(document
 // Proofread
 function runProof(){
   const text=fmt||document.getElementById('srcEditor').value;
+  const srcText=document.getElementById('srcEditor').value;
   issues=[];ignored=new Set();
   const sens=+document.getElementById('gobiSens').value;
+  // 原文を句点で分割してインデックス付きマップを作成
+  const srcSentMap=[];
+  srcText.split(/\n\n+/).forEach(para=>{
+    para.split('\n').forEach(line=>{
+      const trimmed=line.trim();
+      if(!trimmed)return;
+      trimmed.split(/(?<=[。！？])/).forEach(p=>{
+        const s=p.trim();
+        if(s.length>=2)srcSentMap.push(s);
+      });
+      if(!trimmed.split(/(?<=[。！？])/).some(p=>/[。！？]/.test(p))&&trimmed.length>=2)
+        srcSentMap.push(trimmed);
+    });
+  });
+  // 完成版の文から原文の対応文を探す関数
+  const toHalf=s=>s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+                   .replace(/[Ａ-Ｚａ-ｚ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+                   .replace(/！/g,'!').replace(/？/g,'?');
+  function findSrcSent(fmtSent){
+    const stripped=fmtSent.replace(/^[　\s]+/,'');
+    // 1) そのまま
+    let m=srcSentMap.find(s=>s===stripped);
+    if(m)return m;
+    // 2) 半角正規化して比較
+    const halfS=toHalf(stripped);
+    m=srcSentMap.find(s=>toHalf(s)===halfS);
+    if(m)return m;
+    // 3) 末尾句点除いて比較
+    const noEnd=stripped.replace(/[。！？!?]+$/,'');
+    if(noEnd.length>=4){
+      m=srcSentMap.find(s=>s.startsWith(noEnd)||toHalf(s).startsWith(toHalf(noEnd)));
+      if(m)return m;
+    }
+    return stripped;
+  }
 
   // Gobi: check consecutive sentences (地の文のみ、段落内で連続するもの)
   // 段落ごとにリセットして判定する
@@ -217,12 +253,7 @@ function runProof(){
       if(consecutive){
         let c=sens;while(i+c<paraSents.length&&paraSents[i+c].ending===paraSents[i].ending)c++;
         const snippets=paraSents.slice(i,i+c).map(s=>s.snippet);
-        // snippetTextsは原文から取得（完成版との変換差異を回避）
-        const srcVal=document.getElementById('srcEditor').value;
-        const snippetTexts=paraSents.slice(i,i+c).map(s=>{
-          const found=resolveSrcSentence(s.text);
-          return found?found.text:s.text;
-        });
+        const snippetTexts=paraSents.slice(i,i+c).map(s=>findSrcSent(s.text));
         issues.push({type:'gobi',ending:paraSents[i].ending,count:c,message:'「'+paraSents[i].ending+'」が'+c+'文連続',snippets:snippets,snippetTexts:snippetTexts});
         i+=c-1;
       }
