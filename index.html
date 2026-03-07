@@ -396,21 +396,18 @@ function sPop(e,el){
   showPop(p,el);
 }
 
-// スニペットクリック：ジャンプ＋編集ポップアップ
+// スニペットクリック：編集ポップアップのみ（ジャンプはボタンから）
 function snipEditPop(e,el,word,pos,di){
   e.stopPropagation();
-  // まずテキスト本文のその位置へジャンプ
-  jumpToPos(pos,di);
 
   const p=document.getElementById('yPop');
   const src=document.getElementById('srcEditor').value;
   const is=issues[di];
   const isNg=is&&is.type==='ng';
 
-  // 前後文脈（句点区切りで文を抽出）
+  // 前後文脈
   const before=src.slice(Math.max(0,pos-60),pos);
   const after=src.slice(pos+word.length,pos+word.length+60);
-  // 文の始まりを句点・改行で探す
   const sentStart=Math.max(before.lastIndexOf('。'),before.lastIndexOf('\n'))+1;
   const sentEnd=after.search(/[。\n]/);
   const sentence=before.slice(sentStart)+word+(sentEnd>=0?after.slice(0,sentEnd+1):after);
@@ -427,8 +424,10 @@ function snipEditPop(e,el,word,pos,di){
   if(isNg){
     html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
       +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(sentence)+'</textarea>'
-      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEdit(\''+eH(sentence.replace(/'/g,"\\'"))+'\','+pos+')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
+      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEdit(\''+eH(sentence.replace(/\\/g,'\\\\').replace(/'/g,'\\\''))+'\','+pos+')"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
   }
+  // 該当箇所へジャンプボタン
+  html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpToPos('+pos+','+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
   html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
   p.innerHTML=html;
   showPop(p,el);
