@@ -743,7 +743,7 @@ function snipSentEditGobi(e){
   if(!ta)return;
   const to=ta.value.trim();
   const origSent=ta.dataset.orig||'';
-  if(!to){hPop();return;}
+  if(!to||to===origSent){return;}
   const s=document.getElementById('srcEditor');
   const src=s.value;
   // 原文検索：1)そのまま 2)字下げ付き 3)フォールバック
