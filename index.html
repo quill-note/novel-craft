@@ -110,10 +110,10 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 
 <section class="tab-panel" id="panel-split">
 <p style="font-size:13px;color:var(--text2);margin-bottom:12px">完成版テキストを投稿サイト向けに分割します。</p>
-<div class="split-mode-tabs"><button class="split-mode-tab active" onclick="setSM('count',this)">分割数で</button><button class="split-mode-tab" onclick="setSM('chars',this)">文字数で</button></div>
+<div class="split-mode-tabs"><button class="split-mode-tab" onclick="setSM('count',this)">分割数で</button><button class="split-mode-tab active" onclick="setSM('chars',this)">文字数で</button></div>
 <div class="split-settings">
-<div class="split-field" id="spCntF"><label>分割数</label><input type="number" id="spCnt" value="2" min="2" max="20"></div>
-<div class="split-field" id="spChrF" style="display:none"><label>1パートの目安</label><input type="number" id="spChr" value="1500" min="500" step="500"></div>
+<div class="split-field" id="spCntF" style="display:none"><label>分割数</label><input type="number" id="spCnt" value="2" min="2" max="20"></div>
+<div class="split-field" id="spChrF"><label>1パートの目安</label><input type="number" id="spChr" value="1500" min="500" step="500"></div>
 <button class="btn btn-primary btn-sm" onclick="runSplit()"><span class="mi mi-xs">content_cut</span>分割</button></div>
 <div class="split-results" id="spRes"><p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p></div>
 </section>
@@ -127,7 +127,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <script>
 const D_YURE=[['ため','為'],['ください','下さい'],['いただく','頂く'],['できる','出来る'],['すべて','全て'],['わかる','分かる'],['いう','言う'],['みる','見る'],['ほう','方'],['わけ','訳'],['ほど','程']];
 const D_NG=['胸がぎゅっと','心臓がバクバク','どうしよう','ということ','かもしれない','気がする','目が合う','視線','息を呑む'];
-let yureRules=[],ngRules=[],rubyRules=[],fmt='',splitMode='count',issues=[],ignored=new Set();
+let yureRules=[],ngRules=[],rubyRules=[],fmt='',splitMode='chars',issues=[],ignored=new Set();
 
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
