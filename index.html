@@ -172,7 +172,7 @@ function fmtT(t){
   if(oS==='half')t=t.replace(/！/g,'!').replace(/？/g,'?');
   if(document.getElementById('optBP').checked)t=t.replace(/。([」』）\]])/g,'$1');
   if(document.getElementById('optLD').checked){t=t.replace(/…{1,}/g,'……');t=t.replace(/\.{3,}/g,'……');t=t.replace(/—{1,}/g,'——');t=t.replace(/ー{2,}/g,'——');}
-  if(document.getElementById('optSS').checked)t=t.replace(/([！？]+)(?=[^\s！？」』）\]\n《])/g,'$1　');
+  if(document.getElementById('optSS').checked){const parts=t.split(/(《[^》]*》)/g);t=parts.map((s,i)=>i%2===0?s.replace(/([！？]+)(?=[^\s！？」』）\]\n])/g,'$1　'):s).join('');}  
   rubyRules.forEach(([k,r])=>{t=t.replace(new RegExp(eR(k),'g'),'|'+k+'《'+r+'》');});
   const ls=t.split('\n'),res=[];
   for(let i=0;i<ls.length;i++){let l=ls[i];
