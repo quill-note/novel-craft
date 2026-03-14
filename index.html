@@ -32,6 +32,8 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 .btn-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:var(--radius-sm);transition:var(--tr);flex-shrink:0}.btn-icon:hover{color:var(--primary);background:var(--primary-pale)}.btn-icon .mi{font-size:16px}
 .hl-yure{background:rgba(196,138,42,.18);border-bottom:2px solid var(--warn);border-radius:2px;cursor:pointer}.hl-yure:hover{background:rgba(196,138,42,.35)}
 .hl-gobi{background:rgba(232,123,107,.18);border-bottom:2px solid var(--primary);border-radius:2px}
+.diff-add{background:rgba(74,158,110,.2);border-bottom:2px solid var(--success);border-radius:2px}
+.diff-del{background:rgba(180,180,180,.18);color:var(--text3);text-decoration:line-through;border-radius:2px}
 .hl-ng{background:rgba(91,143,212,.18);border-bottom:2px solid var(--info);border-radius:2px}
 .yure-popup{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 4px 16px var(--shadow);padding:12px;width:min(320px,calc(100vw - 16px));font-size:13px}.yure-popup-title{font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--font-mincho);line-height:1.6}.yure-popup-title mark{background:rgba(196,138,42,.25);color:var(--warn);border-radius:2px;font-style:normal;padding:0 2px}.yure-popup .btn{width:100%;justify-content:center;margin-bottom:6px}.yure-popup .btn:last-child{margin-bottom:0}
 .proof-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
@@ -81,7 +83,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <textarea id="srcEditor" placeholder="ここに小説のテキストを貼り付けてください…"></textarea>
 <div class="btn-bar"><button class="btn btn-primary btn-sm" onclick="formatDirect()"><span class="mi mi-xs">auto_fix_high</span>体裁を整える</button><button class="btn btn-primary btn-sm mobile-btn" onclick="openMod('preview')"><span class="mi mi-xs">visibility</span>完成版</button></div>
 <div class="btn-bar" style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="doSave()"><span class="mi mi-xs">save</span>保存</button><button class="btn btn-secondary btn-sm" onclick="expTxt('src')"><span class="mi mi-xs">download</span>TXT</button><button class="btn btn-secondary btn-sm" onclick="document.getElementById('fIn').click()"><span class="mi mi-xs">upload_file</span>読込</button><button class="btn btn-secondary btn-sm" onclick="clearSrc()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button><input type="file" id="fIn" accept=".txt" style="display:none" onchange="loadF(event)"></div></div>
-<div class="editor-col desktop-col"><h3><span class="mi mi-sm">auto_fix_high</span>完成版<span class="badge">リアルタイム</span></h3>
+<div class="editor-col desktop-col"><h3 style="justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span class="mi mi-sm">auto_fix_high</span>完成版<span class="badge">リアルタイム</span></span><button class="btn btn-secondary btn-sm" id="diffToggleBtn" onclick="toggleDiff()" style="font-size:11px;padding:4px 10px"><span class="mi mi-xs">compare_arrows</span>差分表示</button></h3>
 <div class="output-area" id="outPrev"></div>
 <div class="btn-bar"><button class="btn btn-primary btn-sm" onclick="applyToSrc()"><span class="mi mi-xs">check</span>完成版を原文に反映</button></div>
 <div class="btn-bar" style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="expTxt('out')"><span class="mi mi-xs">download</span>TXT</button><button class="btn btn-secondary btn-sm" onclick="cpOut()"><span class="mi mi-xs">content_copy</span>コピー</button></div></div>
@@ -179,7 +181,76 @@ function fmtT(t){
     res.push(l);}
   return res.join('\n');
 }
-function upPrev(){fmt=fmtT(document.getElementById('srcEditor').value);const e=document.getElementById('outPrev');if(e)e.textContent=fmt;upCt();}
+let diffMode=false;
+function toggleDiff(){
+  diffMode=!diffMode;
+  const btn=document.getElementById('diffToggleBtn');
+  if(btn){btn.style.background=diffMode?'var(--primary)':'';btn.style.color=diffMode?'#fff':'';}
+  upPrev();
+}
+// Myers差分アルゴリズム（1文字単位）
+function computeDiff(a,b){
+  const n=a.length,m=b.length;
+  const max=n+m;
+  const v=new Array(2*max+1).fill(0);
+  const trace=[];
+  for(let d=0;d<=max;d++){
+    trace.push([...v]);
+    for(let k=-d;k<=d;k+=2){
+      let x;
+      if(k===-d||(k!==d&&v[k-1+max]<v[k+1+max])){x=v[k+1+max];}
+      else{x=v[k-1+max]+1;}
+      let y=x-k;
+      while(x<n&&y<m&&a[x]===b[y]){x++;y++;}
+      v[k+max]=x;
+      if(x>=n&&y>=m){
+        // バックトラック
+        const ops=[];
+        let cx=x,cy=y;
+        for(let cd=d;cd>0;cd--){
+          const pv=trace[cd-1];
+          const ck=cx-cy;
+          let pk;
+          if(ck===-cd||(ck!==cd&&pv[ck-1+max]<pv[ck+1+max])){pk=ck+1;}
+          else{pk=ck-1;}
+          const px=pv[pk+max],py=px-pk;
+          while(cx>px&&cy>py){cx--;cy--;ops.push({type:'eq',c:a[cx]});}
+          if(cd>0){
+            if(px===cx){ops.push({type:'ins',c:b[cy-1]});cy--;}
+            else{ops.push({type:'del',c:a[cx-1]});cx--;}
+          }
+        }
+        while(cx>0&&cy>0){cx--;cy--;ops.push({type:'eq',c:a[cx]});}
+        return ops.reverse();
+      }
+    }
+  }
+  return a.split('').map(c=>({type:'del',c})).concat(b.split('').map(c=>({type:'ins',c})));
+}
+function diffHTML(src,out){
+  const ops=computeDiff(src,out);
+  let html='';
+  for(const op of ops){
+    const ch=eH(op.c);
+    if(op.type==='eq'){html+=op.c==='\n'?'\n':ch;}
+    else if(op.type==='ins'){html+='<span class="diff-add">'+ch+'</span>';}
+    else{html+='<span class="diff-del">'+ch+'</span>';}
+  }
+  return html;
+}
+function upPrev(){
+  fmt=fmtT(document.getElementById('srcEditor').value);
+  const e=document.getElementById('outPrev');
+  if(e){
+    if(diffMode){
+      const src=document.getElementById('srcEditor').value;
+      e.innerHTML=diffHTML(src,fmt);
+    }else{
+      e.textContent=fmt;
+    }
+  }
+  upCt();
+}
 function applyToSrc(){document.getElementById('srcEditor').value=fmt;upPrev();toast('原文に反映しました');}
 function formatDirect(){document.getElementById('srcEditor').value=fmtT(document.getElementById('srcEditor').value);upPrev();upCt();toast('体裁を整えました');}
 
@@ -896,11 +967,13 @@ function runSplit(){
     const parts=[];let cur=[];
     for(const line of lines){
       if(line.trim()===dlm.trim()||line.includes(dlm)){
-        if(cur.join('\n').trim())parts.push(cur.join('\n').trim());
+        const joined=cur.join('\n');
+        if(joined.trim())parts.push(joined.replace(/^\n+|\n+$/g,''));
         cur=[];
       }else{cur.push(line);}
     }
-    if(cur.join('\n').trim())parts.push(cur.join('\n').trim());
+    const last=cur.join('\n');
+    if(last.trim())parts.push(last.replace(/^\n+|\n+$/g,''));
     pts=parts.length>=2?parts:[t];
     if(parts.length<2){toast('区切り文字が見つかりませんでした');return;}
   }else{
