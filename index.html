@@ -997,7 +997,7 @@ function runSplit(){
       const omit=tailStart-headEnd;
       ph='<pre><span class="split-label">▼ 先頭</span>\n'+eH(p.slice(0,headEnd))+'</pre><div class="split-ellipsis">… 省略（'+omit.toLocaleString()+'字） …</div><pre><span class="split-label">▼ 末尾</span>\n'+eH(p.slice(tailStart))+'</pre>';
     }
-    return '<div class="split-card"><div class="split-card-header"><h4>パート '+(i+1)+'/'+pts.length+'</h4><span>'+p.length.toLocaleString()+' 文字</span></div>'+ph+'<div class="btn-bar"><button class="btn btn-secondary btn-sm" onclick="cpSP('+i+')"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="exSP('+i+')"><span class="mi mi-xs">download</span>TXT</button></div></div>';
+    return '<div class="split-card"><div class="split-card-header"><h4>パート '+(i+1)+'/'+pts.length+'</h4><span>'+countChars(p).toLocaleString()+' 文字</span></div>'+ph+'<div class="btn-bar"><button class="btn btn-secondary btn-sm" onclick="cpSP('+i+')"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="exSP('+i+')"><span class="mi mi-xs">download</span>TXT</button></div></div>';
   }).join('');
   window._sp=pts;
 }
