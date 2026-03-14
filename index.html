@@ -103,8 +103,9 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <div class="setting-row" style="gap:8px;padding:0"><span style="font-size:13px">語尾連続：</span><select id="gobiSens"><option value="2">2回</option><option value="3" selected>3回</option></select></div>
 <div class="setting-row" style="gap:8px;padding:0;flex-wrap:wrap"><span style="font-size:13px">NG再登場距離：</span><select id="ngDist"><option value="1000">1000字以内</option><option value="2000" selected>2000字以内</option><option value="3000">3000字以内</option><option value="5000">5000字以内</option></select><span style="font-size:11px;color:var(--text3)">以内に同じ語が出たら警告</span></div>
 </div>
-<div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px">
-<button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
+<div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;display:flex;gap:8px">
+<button class="btn btn-primary" style="flex:1;justify-content:center;padding:12px" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
+<button class="btn btn-secondary btn-sm" onclick="clearProof()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button>
 </div>
 <div class="proof-summary" id="proofSum" style="display:none;margin-top:16px"></div>
 <div class="output-area" id="proofText" style="display:none;margin-top:12px;line-height:2.2;min-height:300px"></div>
@@ -112,12 +113,12 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 
 <section class="tab-panel" id="panel-split">
 <p style="font-size:13px;color:var(--text2);margin-bottom:12px">完成版テキストを投稿サイト向けに分割します。</p>
-<div class="split-mode-tabs"><button class="split-mode-tab" onclick="setSM('count',this)">分割数で</button><button class="split-mode-tab active" onclick="setSM('chars',this)">文字数で</button><button class="split-mode-tab" onclick="setSM('delim',this)">文字で</button></div>
+<div class="split-mode-tabs"><button class="split-mode-tab active" onclick="setSM('chars',this)">文字数で</button><button class="split-mode-tab" onclick="setSM('delim',this)">記号で</button><button class="split-mode-tab" onclick="setSM('count',this)">分割数で</button></div>
 <div class="split-settings">
 <div class="split-field" id="spCntF" style="display:none"><label>分割数</label><input type="number" id="spCnt" value="2" min="2" max="20"></div>
 <div class="split-field" id="spChrF"><label>1パートの目安</label><input type="number" id="spChr" value="1500" min="500" step="500"></div>
 <div class="split-field" id="spDlmF" style="display:none"><label>区切り文字</label><input class="input-text" id="spDlm" placeholder="例：＊＊＊　◇　---" style="width:200px;font-family:var(--font-mincho)"></div>
-<button class="btn btn-primary btn-sm" onclick="runSplit()"><span class="mi mi-xs">content_cut</span>分割</button></div>
+<button class="btn btn-primary btn-sm" onclick="runSplit()"><span class="mi mi-xs">content_cut</span>分割</button><button class="btn btn-secondary btn-sm" onclick="clearSplit()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button></div>
 <div class="split-results" id="spRes"><p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p></div>
 </section>
 </main>
@@ -1001,9 +1002,11 @@ function runSplit(){
   }).join('');
   window._sp=pts;
 }
+function clearSplit(){document.getElementById('spRes').innerHTML='<p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p>';window._sp=[];toast('クリアしました');}
 function cpSP(i){if(window._sp?.[i]){navigator.clipboard.writeText(window._sp[i]);toast('パート'+(i+1)+'コピー');}}
 function exSP(i){if(window._sp?.[i])dl(window._sp[i],'part'+(i+1)+'.txt');}
 
+function clearProof(){const s=document.getElementById('proofSum'),t=document.getElementById('proofText');if(s){s.style.display='none';s.innerHTML='';}if(t){t.style.display='none';t.innerHTML='';}issues=[];ignored=new Set();toast('チェック結果をクリアしました');}
 function clearSrc(){if(!document.getElementById('srcEditor').value.trim()){return;}if(!confirm('原文エディタの内容をクリアしますか？')){return;}document.getElementById('srcEditor').value='';upPrev();upCt();toast('クリアしました');}
 function doSave(){localStorage.setItem('novelcraft_src',document.getElementById('srcEditor').value);toast('保存しました');}
 function expTxt(m){dl(m==='src'?document.getElementById('srcEditor').value:fmt,m==='src'?'source.txt':'formatted.txt');}
