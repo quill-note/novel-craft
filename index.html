@@ -56,7 +56,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 </style>
 </head>
 <body>
-<header class="header"><div class="header-inner"><div class="header-title"><span class="mi">edit_note</span><h1>執筆補助</h1></div><div class="char-counts"><span>原文: <strong id="srcCount">0</strong> 文字</span><span>完成版: <strong id="outCount">0</strong> 文字</span></div></div></header>
+<header class="header"><div class="header-inner"><div class="header-title"><span class="mi">edit_note</span><h1>執筆補助</h1></div><div class="char-counts" style="flex-direction:column;align-items:flex-start;gap:6px"><select id="countMode" onchange="upCt()" style="font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:12px;background:var(--primary-pale);color:var(--text2);cursor:pointer"><option value="none" selected>改行・スペースなし</option><option value="noline">スペースなし（改行あり）</option><option value="nospace">改行なし（スペースあり）</option><option value="all">すべて含む</option></select><div style="display:flex;gap:12px"><span>原文: <strong id="srcCount">0</strong> 文字</span><span>完成版: <strong id="outCount">0</strong> 文字</span></div></div></div></header>
 <nav class="tab-nav"><button class="tab-btn active" data-tab="editor"><span class="mi mi-sm">edit</span>エディタ</button><button class="tab-btn" data-tab="proofread"><span class="mi mi-sm">search</span>推敲チェック</button><button class="tab-btn" data-tab="split"><span class="mi mi-sm">content_cut</span>投稿用分割</button></nav>
 <main class="main">
 <section class="tab-panel active" id="panel-editor">
@@ -80,7 +80,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <div class="editor-col"><h3><span class="mi mi-sm">edit</span>原文エディタ</h3>
 <textarea id="srcEditor" placeholder="ここに小説のテキストを貼り付けてください…"></textarea>
 <div class="btn-bar"><button class="btn btn-primary btn-sm" onclick="formatDirect()"><span class="mi mi-xs">auto_fix_high</span>体裁を整える</button><button class="btn btn-primary btn-sm mobile-btn" onclick="openMod('preview')"><span class="mi mi-xs">visibility</span>完成版</button></div>
-<div class="btn-bar" style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="doSave()"><span class="mi mi-xs">save</span>保存</button><button class="btn btn-secondary btn-sm" onclick="expTxt('src')"><span class="mi mi-xs">download</span>TXT</button><button class="btn btn-secondary btn-sm" onclick="document.getElementById('fIn').click()"><span class="mi mi-xs">upload_file</span>読込</button><input type="file" id="fIn" accept=".txt" style="display:none" onchange="loadF(event)"></div></div>
+<div class="btn-bar" style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="doSave()"><span class="mi mi-xs">save</span>保存</button><button class="btn btn-secondary btn-sm" onclick="expTxt('src')"><span class="mi mi-xs">download</span>TXT</button><button class="btn btn-secondary btn-sm" onclick="document.getElementById('fIn').click()"><span class="mi mi-xs">upload_file</span>読込</button><button class="btn btn-secondary btn-sm" onclick="clearSrc()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button><input type="file" id="fIn" accept=".txt" style="display:none" onchange="loadF(event)"></div></div>
 <div class="editor-col desktop-col"><h3><span class="mi mi-sm">auto_fix_high</span>完成版<span class="badge">リアルタイム</span></h3>
 <div class="output-area" id="outPrev"></div>
 <div class="btn-bar"><button class="btn btn-primary btn-sm" onclick="applyToSrc()"><span class="mi mi-xs">check</span>完成版を原文に反映</button></div>
@@ -156,7 +156,8 @@ function openMod(t){
   document.getElementById('mOvl').classList.add('show');document.body.style.overflow='hidden';
 }
 function closeMod(){document.getElementById('mOvl').classList.remove('show');document.body.style.overflow='';}
-function upCt(){document.getElementById('srcCount').textContent=document.getElementById('srcEditor').value.length.toLocaleString();document.getElementById('outCount').textContent=fmt.length.toLocaleString();}
+function countChars(t){const m=document.getElementById('countMode')?.value||'none';if(m==='none')return t.replace(/[\n\r\s　]/g,'').length;if(m==='noline')return t.replace(/[\s　]/g,'').length;if(m==='nospace')return t.replace(/[\n\r]/g,'').length;return t.length;}
+function upCt(){document.getElementById('srcCount').textContent=countChars(document.getElementById('srcEditor').value).toLocaleString();document.getElementById('outCount').textContent=countChars(fmt).toLocaleString();}
 
 // Format
 function fmtT(t){
@@ -169,7 +170,7 @@ function fmtT(t){
   if(oS==='half')t=t.replace(/！/g,'!').replace(/？/g,'?');
   if(document.getElementById('optBP').checked)t=t.replace(/。([」』）\]])/g,'$1');
   if(document.getElementById('optLD').checked){t=t.replace(/…{1,}/g,'……');t=t.replace(/\.{3,}/g,'……');t=t.replace(/—{1,}/g,'——');t=t.replace(/ー{2,}/g,'——');}
-  if(document.getElementById('optSS').checked)t=t.replace(/([！？]+)(?=[^\s！？」』）\]\n])/g,'$1　');
+  if(document.getElementById('optSS').checked)t=t.replace(/([！？]+)(?=[^\s！？」』）\]\n《])/g,'$1　');
   rubyRules.forEach(([k,r])=>{t=t.replace(new RegExp(eR(k),'g'),'|'+k+'《'+r+'》');});
   const ls=t.split('\n'),res=[];
   for(let i=0;i<ls.length;i++){let l=ls[i];
@@ -930,6 +931,7 @@ function runSplit(){
 function cpSP(i){if(window._sp?.[i]){navigator.clipboard.writeText(window._sp[i]);toast('パート'+(i+1)+'コピー');}}
 function exSP(i){if(window._sp?.[i])dl(window._sp[i],'part'+(i+1)+'.txt');}
 
+function clearSrc(){if(!document.getElementById('srcEditor').value.trim()){return;}if(!confirm('原文エディタの内容をクリアしますか？')){return;}document.getElementById('srcEditor').value='';upPrev();upCt();toast('クリアしました');}
 function doSave(){localStorage.setItem('novelcraft_src',document.getElementById('srcEditor').value);toast('保存しました');}
 function expTxt(m){dl(m==='src'?document.getElementById('srcEditor').value:fmt,m==='src'?'source.txt':'formatted.txt');}
 function dl(t,f){const b=new Blob([t],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f;a.click();URL.revokeObjectURL(a.href);toast(f);}
