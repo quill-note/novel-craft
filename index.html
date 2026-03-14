@@ -110,10 +110,11 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 
 <section class="tab-panel" id="panel-split">
 <p style="font-size:13px;color:var(--text2);margin-bottom:12px">完成版テキストを投稿サイト向けに分割します。</p>
-<div class="split-mode-tabs"><button class="split-mode-tab" onclick="setSM('count',this)">分割数で</button><button class="split-mode-tab active" onclick="setSM('chars',this)">文字数で</button></div>
+<div class="split-mode-tabs"><button class="split-mode-tab" onclick="setSM('count',this)">分割数で</button><button class="split-mode-tab active" onclick="setSM('chars',this)">文字数で</button><button class="split-mode-tab" onclick="setSM('delim',this)">文字で</button></div>
 <div class="split-settings">
 <div class="split-field" id="spCntF" style="display:none"><label>分割数</label><input type="number" id="spCnt" value="2" min="2" max="20"></div>
 <div class="split-field" id="spChrF"><label>1パートの目安</label><input type="number" id="spChr" value="1500" min="500" step="500"></div>
+<div class="split-field" id="spDlmF" style="display:none"><label>区切り文字</label><input class="input-text" id="spDlm" placeholder="例：＊＊＊　◇　---" style="width:200px;font-family:var(--font-mincho)"></div>
 <button class="btn btn-primary btn-sm" onclick="runSplit()"><span class="mi mi-xs">content_cut</span>分割</button></div>
 <div class="split-results" id="spRes"><p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p></div>
 </section>
@@ -881,14 +882,32 @@ function addRuby(){const k=document.getElementById('rubyK').value.trim(),r=docum
 function sj(k,v){localStorage.setItem(k,JSON.stringify(v));}
 
 // Split
-function setSM(m,b){splitMode=m;document.querySelectorAll('.split-mode-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('spCntF').style.display=m==='count'?'':'none';document.getElementById('spChrF').style.display=m==='chars'?'':'none';}
+function setSM(m,b){splitMode=m;document.querySelectorAll('.split-mode-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('spCntF').style.display=m==='count'?'':'none';document.getElementById('spChrF').style.display=m==='chars'?'':'none';document.getElementById('spDlmF').style.display=m==='delim'?'':'none';}
 function endsDlg(t){const ls=t.split('\n');for(let i=ls.length-1;i>=0;i--){const l=ls[i].trim();if(!l)continue;return /^[「『]/.test(l)||/[」』]$/.test(l);}return false;}
 function runSplit(){
   const t=fmt||document.getElementById('srcEditor').value;if(!t.trim()){toast('テキストがありません');return;}
+  let pts=[];
+  if(splitMode==='delim'){
+    const dlm=document.getElementById('spDlm').value;
+    if(!dlm.trim()){toast('区切り文字を入力してください');return;}
+    // 区切り文字を含む行全体を区切りとして扱う
+    const lines=t.split('\n');
+    const parts=[];let cur=[];
+    for(const line of lines){
+      if(line.trim()===dlm.trim()||line.includes(dlm)){
+        if(cur.join('\n').trim())parts.push(cur.join('\n').trim());
+        cur=[];
+      }else{cur.push(line);}
+    }
+    if(cur.join('\n').trim())parts.push(cur.join('\n').trim());
+    pts=parts.length>=2?parts:[t];
+    if(parts.length<2){toast('区切り文字が見つかりませんでした');return;}
+  }else{
   let sc;if(splitMode==='chars'){sc=Math.max(2,Math.ceil(t.length/(+document.getElementById('spChr').value||1500)));}else{sc=+document.getElementById('spCnt').value||2;}
-  const pa=t.split(/\n\n+/),tgt=Math.ceil(t.length/sc),pts=[];let cur=[],cl=0;
+  const pa=t.split(/\n\n+/),tgt=Math.ceil(t.length/sc);let cur=[],cl=0;
   for(let i=0;i<pa.length;i++){cur.push(pa[i]);cl+=pa[i].length;if(cl>=tgt&&pts.length<sc-1){const j=cur.join('\n\n');if(endsDlg(j)&&i+1<pa.length)continue;pts.push(j);cur=[];cl=0;}}
   if(cur.length)pts.push(cur.join('\n\n'));
+  }
   document.getElementById('spRes').innerHTML=pts.map((p,i)=>{
     const H=300,T=200;let ph;
     if(p.length<=H+T+50){ph='<pre>'+eH(p)+'</pre>';}
