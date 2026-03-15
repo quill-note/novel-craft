@@ -14,9 +14,9 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon.png">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--primary:#e87b6b;--primary-dark:#c9584a;--primary-light:#f5a99e;--primary-pale:#fdf0ee;--bg:#fef8f7;--surface:#fff;--border:#f0d5d1;--text:#4a2525;--text2:#7a4545;--text3:#aa7777;--success:#4a9e6e;--warn:#c48a2a;--warnbg:#fef9eb;--info:#5b8fd4;--info-pale:#eaf1fb;--shadow:rgba(232,123,107,.15);--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--font-mincho:'Zen Old Mincho',serif;--tr:.2s ease}
+:root{--primary:#e87b6b;--primary-dark:#c9584a;--primary-light:#f5a99e;--primary-pale:#fdf0ee;--bg:#fef8f7;--surface:#fff;--border:#f0d5d1;--text:#4a2525;--text2:#7a4545;--text3:#aa7777;--success:#4a9e6e;--warn:#c48a2a;--warnbg:#fef9eb;--info:#5b8fd4;--info-pale:#eaf1fb;--shadow:rgba(232,123,107,.15);--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--font-mincho:'BIZ UDPGothic',sans-serif;--tr:.2s ease}
 .mi{font-family:'Material Icons Round';font-style:normal;font-size:20px;line-height:1;vertical-align:middle;user-select:none}.mi-sm{font-size:16px}.mi-xs{font-size:14px}
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;position:sticky;top:0;z-index:100}.header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}.header-title{display:flex;align-items:center;gap:10px}.header-title .mi{font-size:24px;color:var(--primary)}.header h1{font-size:18px;font-weight:700;color:var(--primary-dark)}.char-counts{display:flex;gap:12px;font-size:12px;color:var(--text2)}.char-counts span{background:var(--primary-pale);padding:4px 12px;border-radius:20px}.char-counts strong{color:var(--primary-dark);font-weight:700}
@@ -101,10 +101,10 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 
 <div style="margin:16px 0;display:flex;flex-direction:column;gap:10px">
 <div class="setting-row" style="gap:8px;padding:0"><span style="font-size:13px">語尾連続：</span><select id="gobiSens"><option value="2">2回</option><option value="3" selected>3回</option></select></div>
-<div class="setting-row" style="gap:8px;padding:0;flex-wrap:wrap"><span style="font-size:13px">NG再登場距離：</span><select id="ngDist"><option value="1000">1000字以内</option><option value="2000" selected>2000字以内</option><option value="3000">3000字以内</option><option value="5000">5000字以内</option></select><span style="font-size:11px;color:var(--text3)">以内に同じ語が出たら警告</span></div>
+<div class="setting-row" style="gap:8px;padding:0;flex-wrap:wrap"><span style="font-size:13px">NG再登場距離：</span><select id="ngDist"><option value="1000">1000字以内</option><option value="2000" selected>2000字以内</option><option value="3000">3000字以内</option><option value="5000">5000字以内</option></select><span style="font-size:13px;color:var(--text3)">以内に同じ語が出たら警告</span></div>
 </div>
-<div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;display:flex;gap:8px">
-<button class="btn btn-primary" style="flex:1;justify-content:center;padding:12px" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
+<div style="padding-top:8px;margin-top:4px;display:flex;gap:6px;align-items:center">
+<button class="btn btn-primary btn-sm" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
 <button class="btn btn-secondary btn-sm" onclick="clearProof()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button>
 </div>
 <div class="proof-summary" id="proofSum" style="display:none;margin-top:16px"></div>
@@ -118,7 +118,7 @@ select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13p
 <div class="split-field" id="spCntF" style="display:none"><label>分割数</label><input type="number" id="spCnt" value="2" min="2" max="20"></div>
 <div class="split-field" id="spChrF"><label>1パートの目安</label><input type="number" id="spChr" value="1500" min="500" step="500"></div>
 <div class="split-field" id="spDlmF" style="display:none"><label>区切り文字</label><input class="input-text" id="spDlm" placeholder="例：＊＊＊　◇　---" style="width:200px;font-family:var(--font-mincho)"></div>
-<button class="btn btn-primary btn-sm" onclick="runSplit()"><span class="mi mi-xs">content_cut</span>分割</button><button class="btn btn-secondary btn-sm" onclick="clearSplit()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button></div>
+<div style="display:flex;gap:6px;align-items:center"><button class="btn btn-primary btn-sm" onclick="runSplit()"><span class="mi mi-xs">content_cut</span>分割</button><button class="btn btn-secondary btn-sm" onclick="clearSplit()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button></div></div>
 <div class="split-results" id="spRes"><p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p></div>
 </section>
 </main>
