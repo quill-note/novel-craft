@@ -1208,7 +1208,20 @@ function runSplit(){
   window._sp=pts;
 }
 function clearSplit(){document.getElementById('spRes').innerHTML='<p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p>';window._sp=[];toast('クリアしました');}
-function cpSP(i){if(window._sp?.[i]){navigator.clipboard.writeText(window._sp[i]);toast('パート'+(i+1)+'コピー');}}
+function cpSP(i){
+  const text=window._sp?.[i];
+  if(!text){toast('コピー失敗：データがありません');return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('パート'+(i+1)+'コピー')).catch(()=>cpFallback(text,'パート'+(i+1)+'コピー'));
+  }else{cpFallback(text,'パート'+(i+1)+'コピー');}
+}
+function cpFallback(text,msg){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');toast(msg);}catch(e){toast('コピーできませんでした');}
+  document.body.removeChild(ta);
+}
 function exSP(i){if(window._sp?.[i])dl(window._sp[i],'part'+(i+1)+'.txt');}
 
 function clearProof(){const s=document.getElementById('proofSum'),t=document.getElementById('proofText'),ph=document.getElementById('proofPlaceholder');if(s){s.style.display='none';s.innerHTML='';}if(t){t.style.display='none';t.innerHTML='';}if(ph)ph.style.display='block';issues=[];ignored=new Set();toast('チェック結果をクリアしました');}
