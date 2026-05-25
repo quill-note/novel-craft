@@ -3,1306 +3,159 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>執筆補助</title>
 <meta name="theme-color" content="#e87b6b">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="執筆補助">
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon.png">
+<meta name="apple-mobile-web-app-title" content="quill-note">
+<title>quill-note</title>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--primary:#e87b6b;--primary-dark:#c9584a;--primary-light:#f5a99e;--primary-pale:#fdf0ee;--bg:#fef8f7;--surface:#fff;--border:#f0d5d1;--text:#4a2525;--text2:#7a4545;--text3:#aa7777;--success:#4a9e6e;--warn:#c48a2a;--warnbg:#fef9eb;--info:#5b8fd4;--info-pale:#eaf1fb;--shadow:rgba(232,123,107,.15);--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--font-mincho:'BIZ UDPGothic',sans-serif;--tr:.2s ease}
-.mi{font-family:'Material Icons Round';font-style:normal;font-size:20px;line-height:1;vertical-align:middle;user-select:none}.mi-sm{font-size:16px}.mi-xs{font-size:14px}
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;position:sticky;top:0;z-index:100}.header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}.header-title{display:flex;align-items:center;gap:10px}.header-title .mi{font-size:24px;color:var(--primary)}.header h1{font-size:18px;font-weight:700;color:var(--primary-dark)}.char-counts{display:flex;gap:12px;font-size:12px;color:var(--text2)}.char-counts span{background:var(--primary-pale);padding:4px 12px;border-radius:20px}.char-counts strong{color:var(--primary-dark);font-weight:700}
-.tab-nav{max-width:1200px;margin:0 auto;padding:12px 24px 0;display:flex;gap:4px}.tab-btn{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13px;font-weight:500;padding:9px 18px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:var(--radius-md) var(--radius-md) 0 0;transition:var(--tr);display:flex;align-items:center;gap:6px}.tab-btn .mi{font-size:16px}.tab-btn:hover{background:var(--primary-pale);color:var(--primary)}.tab-btn.active{background:var(--surface);color:var(--primary-dark);box-shadow:0 1px 6px var(--shadow);font-weight:700}
-.main{max-width:1200px;margin:0 auto;padding:0 24px 40px}.tab-panel{display:none;background:var(--surface);border-radius:0 var(--radius-lg) var(--radius-lg) var(--radius-lg);box-shadow:0 1px 6px var(--shadow);padding:24px;animation:fadeIn .25s ease}.tab-panel.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.editor-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px}.editor-col h3{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}.editor-col h3 .badge{font-size:10px;font-weight:500;background:var(--primary-pale);color:var(--primary);padding:2px 8px;border-radius:10px}
-textarea,.output-area{width:100%;min-height:420px;padding:16px;font-family:var(--font-mincho);font-size:13px;line-height:2;border:1.5px solid var(--border);border-radius:var(--radius-md);resize:vertical;transition:var(--tr);background:var(--surface);color:var(--text)}textarea:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(232,123,107,.1)}.output-area{background:var(--bg);overflow-y:auto;white-space:pre-wrap;word-wrap:break-word}
-.settings-panel{margin-bottom:16px}.settings-toggle{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13px;font-weight:500;color:var(--text2);background:var(--bg);border:1px solid var(--border);padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--tr);display:flex;align-items:center;gap:6px}.settings-toggle:hover{border-color:var(--primary-light);color:var(--primary)}.settings-body{display:none;margin-top:12px;padding:20px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--border)}.settings-body.open{display:block}
-.setting-group{margin-bottom:16px}.setting-group-title{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--primary-pale);display:flex;align-items:center;gap:6px}.setting-group-title .mi{font-size:14px}.setting-row{display:flex;align-items:center;gap:12px;padding:6px 0}.setting-row label{font-size:13px;color:var(--text);flex:1}.setting-row small{font-size:11px;color:var(--text3);display:block;margin-top:1px}
-.toggle{position:relative;width:40px;height:22px;flex-shrink:0}.toggle input{display:none}.toggle .slider{position:absolute;inset:0;background:var(--border);border-radius:11px;cursor:pointer;transition:var(--tr)}.toggle .slider::before{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:var(--surface);border-radius:50%;transition:var(--tr);box-shadow:0 1px 3px rgba(0,0,0,.15)}.toggle input:checked+.slider{background:var(--primary)}.toggle input:checked+.slider::before{transform:translateX(18px)}
-select,.input-text{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);transition:var(--tr)}select:focus,.input-text:focus{outline:none;border-color:var(--primary-light)}
-.btn{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:var(--tr);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}.btn .mi{font-size:14px}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}.btn-secondary{background:var(--bg);color:var(--text2);border:1px solid var(--border)}.btn-secondary:hover{background:var(--primary-pale);color:var(--primary);border-color:var(--primary-light)}.btn-sm{font-size:12px;padding:6px 12px}.btn-bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.btn-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:var(--radius-sm);transition:var(--tr);flex-shrink:0}.btn-icon:hover{color:var(--primary);background:var(--primary-pale)}.btn-icon .mi{font-size:16px}
-.hl-yure{background:rgba(196,138,42,.18);border-bottom:2px solid var(--warn);border-radius:2px;cursor:pointer}.hl-yure:hover{background:rgba(196,138,42,.35)}
-.hl-gobi{background:rgba(232,123,107,.18);border-bottom:2px solid var(--primary);border-radius:2px}
-.diff-add{background:rgba(74,158,110,.2);border-bottom:2px solid var(--success);border-radius:2px}
-.diff-del{background:rgba(180,180,180,.18);color:var(--text3);text-decoration:line-through;border-radius:2px}
-.hl-ng{background:rgba(91,143,212,.18);border-bottom:2px solid var(--info);border-radius:2px}
-.yure-popup{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 4px 16px var(--shadow);padding:12px;width:min(320px,calc(100vw - 16px));font-size:13px}.yure-popup-title{font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--font-mincho);line-height:1.6}.yure-popup-title mark{background:rgba(196,138,42,.25);color:var(--warn);border-radius:2px;font-style:normal;padding:0 2px}.yure-popup .btn{width:100%;justify-content:center;margin-bottom:6px}.yure-popup .btn:last-child{margin-bottom:0}
-.proof-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.proof-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px}
-.proof-badge.gobi{background:var(--primary-pale);color:var(--primary-dark)}.proof-badge.yure{background:var(--warnbg);color:var(--warn)}.proof-badge.ng{background:var(--info-pale);color:var(--info)}.proof-badge.diff{background:rgba(74,158,110,.12);color:#4a9e6e}.proof-badge.bracket{background:#f0eafb;color:#7c4dbe}
-.proof-item{padding:6px 0;border-bottom:1px solid var(--primary-pale);cursor:pointer;display:flex;align-items:flex-start;gap:8px;font-size:13px}.proof-item:last-child{border-bottom:none}.proof-item:hover{background:var(--primary-pale);margin:0 -8px;padding:6px 8px;border-radius:var(--radius-sm)}.proof-item.ignored{opacity:.4;background:var(--bg);text-decoration:none}.proof-item.ignored .proof-tag{opacity:.5}.proof-item.ignored>span:nth-child(2){color:var(--text3)}
-.proof-item-body{flex:1;min-width:0}
-.proof-snippets{margin-top:4px;display:flex;flex-direction:column;gap:3px}
-.proof-snippet{font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-family:var(--font-mincho);line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:var(--tr)}.proof-snippet:hover{border-color:var(--warn);background:var(--warnbg)}.proof-snippet mark{background:rgba(196,138,42,.25);color:var(--warn);border-radius:2px;font-style:normal;padding:0 1px}.proof-snippet.ng-snip:hover{border-color:var(--info);background:var(--info-pale)}.proof-snippet.ng-snip mark{background:rgba(91,143,212,.25);color:var(--info)}
-.proof-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-right:4px;flex-shrink:0}.proof-tag.gobi{background:var(--primary-pale);color:var(--primary-dark)}.proof-tag.yure{background:var(--warnbg);color:var(--warn)}.proof-tag.ng{background:var(--info-pale);color:var(--info)}.proof-tag.bracket{background:#f0eafb;color:#7c4dbe}
-.proof-actions{margin-left:auto;display:flex;gap:2px;flex-shrink:0}
-.split-settings{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}.split-field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}.split-field input[type="number"]{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:13px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);width:100px;text-align:center;color:var(--text)}
-.split-results{display:flex;flex-direction:column;gap:12px}.split-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px}.split-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.split-card-header h4{font-size:13px;color:var(--primary-dark);font-weight:700}.split-card-header span{font-size:11px;color:var(--text3)}.split-card pre{font-family:var(--font-mincho);font-size:13px;line-height:1.9;white-space:pre-wrap;word-wrap:break-word;max-height:280px;overflow-y:auto;color:var(--text2)}.split-label{font-size:11px;font-weight:700;color:var(--text3);margin:8px 0 4px;padding:4px 8px;background:var(--primary-pale);border-radius:4px;display:inline-block}.split-ellipsis{text-align:center;color:var(--text3);padding:12px 0;font-size:12px;border-top:1px dashed var(--border);border-bottom:1px dashed var(--border);margin:4px 0}
-.split-mode-tabs{display:flex;gap:4px;margin-bottom:12px}.split-mode-tab{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:12px;padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text3);cursor:pointer;transition:var(--tr)}.split-mode-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.rule-list{margin-top:8px}.rule-row{display:flex;gap:6px;align-items:center;padding:3px 0}.rule-row .input-text{flex:1;min-width:0}.rule-add{display:flex;gap:6px;align-items:center;margin-top:8px}.rule-add .input-text{flex:1;min-width:0}
-.collapse-toggle{font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:12px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0 0 4px;margin-bottom:10px;border-bottom:1px solid var(--primary-pale);width:100%}.collapse-toggle .mi{font-size:14px;transition:transform .2s}.collapse-toggle.open .mi-arrow{transform:rotate(180deg)}.collapse-body{display:none}.collapse-body.open{display:block}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(74,37,37,.35);z-index:500;align-items:flex-end;justify-content:center}.modal-overlay.show{display:flex}.modal-panel{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:20px;animation:slideUp .3s ease}@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.modal-header h3{font-size:15px;font-weight:700;color:var(--primary-dark);display:flex;align-items:center;gap:6px}.modal-close{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px}
-.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--primary-dark);color:#fff;padding:12px 16px;border-radius:var(--radius-md);font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(201,88,74,.45);transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;opacity:0;z-index:600;pointer-events:none;display:flex;flex-direction:column;gap:8px;width:min(280px,calc(100vw - 32px))}.toast-row{display:flex;align-items:center;gap:8px}.toast .mi{font-size:18px;flex-shrink:0}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
-.mobile-btn{display:none}
-@media(max-width:768px){.editor-layout{grid-template-columns:1fr}.desktop-col{display:none}.mobile-btn{display:inline-flex}.header-inner{flex-direction:column;align-items:flex-start}.tab-nav{padding:8px 16px 0;overflow-x:auto}.tab-btn{padding:8px 14px;font-size:12px;white-space:nowrap}.main{padding:0 16px 32px}.tab-panel{padding:16px}textarea{min-height:300px}.split-settings{flex-direction:column;align-items:stretch}}
-.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(74,37,37,.5);z-index:700;align-items:center;justify-content:center;padding:20px}.confirm-overlay.show{display:flex}.confirm-box{background:var(--surface);border-radius:var(--radius-lg);padding:20px;width:min(320px,calc(100vw - 40px));box-shadow:0 8px 32px var(--shadow)}.confirm-box p{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px}.confirm-preview{font-family:var(--font-mincho);font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:14px;line-height:1.8;max-height:100px;overflow-y:auto;word-break:break-all}.confirm-preview del{color:var(--text3);text-decoration:line-through}.confirm-preview ins{color:var(--primary-dark);text-decoration:none;font-weight:700}.confirm-btns{display:flex;gap:8px}.confirm-btns .btn{flex:1;justify-content:center}
+  :root {
+    --primary: #e87b6b;
+    --primary-dark: #c9584a;
+    --primary-light: #f5a99e;
+    --primary-pale: #fdf0ee;
+    --bg: #fef8f7;
+    --surface: #ffffff;
+    --surface2: #fdf3f2;
+    --border: #f0d5d1;
+    --text: #4a2525;
+    --text2: #7a4545;
+    --text3: #aa7777;
+    --shadow: rgba(232,123,107,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ヘッダー */
+  .header {
+    background: var(--surface);
+    padding: 14px 16px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+
+  .header h1 {
+    font-size: 20px;
+    color: var(--primary);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  /* カードリスト */
+  .card-list {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 6px var(--shadow);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: box-shadow 0.2s;
+    color: inherit;
+  }
+
+  .card:hover {
+    box-shadow: 0 4px 12px var(--shadow);
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--primary-pale);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .card-icon .material-icons-round {
+    font-size: 22px;
+    color: var(--primary);
+  }
+
+  .card-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .card-desc {
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+
+  .card-arrow {
+    color: var(--border);
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+
 </style>
 </head>
 <body>
-<header class="header"><div class="header-inner"><div class="header-title"><span class="mi">edit_note</span><h1>執筆補助</h1></div><div class="char-counts" style="flex-direction:column;align-items:flex-start;gap:6px"><select id="countMode" onchange="upCt()" style="font-family:'Hiragino Sans','Meiryo',sans-serif;font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:12px;background:var(--primary-pale);color:var(--text2);cursor:pointer"><option value="none" selected>改行・スペースなし</option><option value="noline">スペースなし（改行あり）</option><option value="nospace">改行なし（スペースあり）</option><option value="all">すべて含む</option></select><div style="display:flex;gap:12px"><span><strong id="srcCount">0</strong> 文字</span></div></div></div></header>
-<nav class="tab-nav"><button class="tab-btn active" data-tab="editor"><span class="mi mi-sm">edit</span>エディタ</button><button class="tab-btn" data-tab="proofread"><span class="mi mi-sm">search</span>推敲チェック</button><button class="tab-btn" data-tab="split"><span class="mi mi-sm">content_cut</span>投稿用分割</button></nav>
-<main class="main">
-<section class="tab-panel active" id="panel-editor">
-<p style="font-size:13px;color:var(--text2);margin-bottom:12px">テキストを貼り付けて、書式を整えます。</p>
-<div class="settings-panel"><button class="settings-toggle" id="sToggle"><span class="mi mi-sm">settings</span>書式設定を開く</button>
-<div class="settings-body" id="sBody">
-<div class="setting-group"><div class="setting-group-title"><span class="mi">swap_horiz</span>文字種の変換</div>
-<div class="setting-row"><label>英字</label><select id="optAlpha"><option value="none">変更しない</option><option value="full">全角</option><option value="half" selected>半角</option></select></div>
-<div class="setting-row"><label>数字</label><select id="optNum"><option value="none">変更しない</option><option value="full" selected>全角</option><option value="half">半角</option></select></div>
-<div class="setting-row"><label>記号(!?)</label><select id="optSym"><option value="none">変更しない</option><option value="full" selected>全角</option><option value="half">半角</option></select></div></div>
-<div class="setting-group"><div class="setting-group-title"><span class="mi">tune</span>変換ルール</div>
-<div class="setting-row"><label>行頭の字下げ<small>段落先頭に全角スペース</small></label><div class="toggle"><input type="checkbox" id="optIndent" checked><span class="slider"></span></div></div>
-<div class="setting-row"><label>カギ括弧の句点<small>」直前の。を削除</small></label><div class="toggle"><input type="checkbox" id="optBP" checked><span class="slider"></span></div></div>
-<div class="setting-row"><label>記号後のスペース<small>！？直後に全角スペース</small></label><div class="toggle"><input type="checkbox" id="optSS" checked><span class="slider"></span></div></div>
-<div class="setting-row"><label>リーダー・ダッシュ統一<small>…や—を2連続に</small></label><div class="toggle"><input type="checkbox" id="optLD" checked><span class="slider"></span></div></div>
-<div class="setting-row"><label>シーン区切りの空行<small>記号行の前後を空ける</small></label><div class="toggle"><input type="checkbox" id="optSB" checked><span class="slider"></span></div></div></div>
-<div class="setting-group" style="margin-bottom:0"><div class="setting-group-title"><span class="mi">translate</span>ルビ一括変換<small style="font-weight:400;color:var(--text3);margin-left:6px">|漢字《るび》</small></div>
-<div id="rubyList" class="rule-list"></div>
-<div class="rule-add"><input class="input-text" id="rubyK" placeholder="漢字"><input class="input-text" id="rubyR" placeholder="読み"><button class="btn btn-secondary btn-sm" onclick="addRuby()"><span class="mi mi-xs">add</span></button></div></div>
-</div></div>
-<div class="editor-layout">
-<div class="editor-col" style="grid-column:1/-1"><h3><span class="mi mi-sm">edit</span>エディタ</h3>
-<textarea id="srcEditor" placeholder="ここに小説のテキストを貼り付けてください…"></textarea>
-<div class="btn-bar"><button class="btn btn-primary btn-sm" onclick="formatDirect()"><span class="mi mi-xs">auto_fix_high</span>体裁を整える</button><button class="btn btn-secondary btn-sm" id="undoBtn" onclick="undoFormat()" style="display:none"><span class="mi mi-xs">undo</span>戻す</button></div>
-<div class="btn-bar" style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="expTxt('src')"><span class="mi mi-xs">download</span>TXT</button><button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('srcEditor').value);toast('コピー')"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="document.getElementById('fIn').click()"><span class="mi mi-xs">upload_file</span>読込</button><button class="btn btn-secondary btn-sm" onclick="clearSrc()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button><input type="file" id="fIn" accept=".txt" style="display:none" onchange="loadF(event)"></div></div>
+
+<div class="header">
+  <h1>quill-note</h1>
+  <div class="header-sub">創作サポートツール</div>
 </div>
-<!-- 整形結果パネル -->
-<div id="fmtResultPanel" style="display:none;margin-top:16px">
-  <div class="proof-badges" id="fmtResultBadges" style="margin-bottom:8px"></div>
-  <div id="fmtResultList"></div>
+
+<div class="card-list">
+  <a class="card" href="./novel-craft/">
+    <div class="card-icon">
+      <span class="material-icons-round">edit_note</span>
+    </div>
+    <div class="card-body">
+      <div class="card-name">執筆補助</div>
+      <div class="card-desc">書式整形・推敲チェック・投稿用分割</div>
+    </div>
+    <span class="material-icons-round card-arrow">chevron_right</span>
+  </a>
+
+  <a class="card" href="./byosha-hikidashi/">
+    <div class="card-icon">
+      <span class="material-icons-round">auto_fix_high</span>
+    </div>
+    <div class="card-body">
+      <div class="card-name">描写の引き出し</div>
+      <div class="card-desc">表現検索・描写練習・マイ辞典</div>
+    </div>
+    <span class="material-icons-round card-arrow">chevron_right</span>
+  </a>
 </div>
-</section>
 
-<section class="tab-panel" id="panel-proofread">
-<p style="font-size:13px;color:var(--text2);margin-bottom:12px">語尾の連続・表記ゆれ・NGワードをチェックします。</p>
-<button class="collapse-toggle" id="yureToggle" onclick="tog('yure')"><span class="mi">menu_book</span>表記ゆれルール（<span id="yureCt">0</span>件）<span class="mi mi-arrow" style="margin-left:auto">expand_more</span></button>
-<div class="collapse-body" id="yureBody"><div id="yureList" class="rule-list"></div>
-<div class="rule-add"><input class="input-text" id="yA" placeholder="例：わたし"><span style="color:var(--text3);flex-shrink:0">↔</span><input class="input-text" id="yB" placeholder="例：私"><button class="btn btn-secondary btn-sm" onclick="addYure()"><span class="mi mi-xs">add</span></button></div></div>
-
-<button class="collapse-toggle" id="ngToggle" onclick="tog('ng')" style="margin-top:12px"><span class="mi">block</span>NGリスト（<span id="ngCt">0</span>件）<span class="mi mi-arrow" style="margin-left:auto">expand_more</span></button>
-<div class="collapse-body" id="ngBody"><div id="ngList" class="rule-list"></div>
-<div class="rule-add"><input class="input-text" id="ngW" placeholder="例：胸がぎゅっと"><button class="btn btn-secondary btn-sm" onclick="addNg()"><span class="mi mi-xs">add</span></button></div></div>
-
-<div style="margin:16px 0;display:flex;flex-direction:column;gap:10px">
-<div class="setting-row" style="gap:8px;padding:0"><span style="font-size:13px">語尾連続：</span><select id="gobiSens"><option value="2">2回</option><option value="3" selected>3回</option></select></div>
-<div class="setting-row" style="gap:8px;padding:0;flex-wrap:wrap"><span style="font-size:13px">NG再登場距離：</span><select id="ngDist"><option value="1000">1000字以内</option><option value="2000" selected>2000字以内</option><option value="3000">3000字以内</option><option value="5000">5000字以内</option></select><span style="font-size:13px;color:var(--text3)">以内に同じ語が出たら警告</span></div>
-</div>
-<div style="padding-top:8px;margin-top:4px;display:flex;gap:6px;align-items:center">
-<button class="btn btn-primary btn-sm" onclick="runProof()"><span class="mi mi-xs">search</span>チェック実行</button>
-<button class="btn btn-secondary btn-sm" onclick="clearProof()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button>
-</div>
-<div class="proof-summary" id="proofSum" style="display:none;margin-top:16px"></div>
-<div id="proofPlaceholder" style="margin-top:16px"><p style="font-size:13px;color:var(--text3)">チェック結果がここに表示されます。</p></div>
-<div class="output-area" id="proofText" style="display:none;margin-top:12px;line-height:2.2;min-height:300px"></div>
-</section>
-
-<section class="tab-panel" id="panel-split">
-<p style="font-size:13px;color:var(--text2);margin-bottom:12px">テキストを投稿サイト向けに分割します。</p>
-<div class="split-mode-tabs"><button class="split-mode-tab active" onclick="setSM('chars',this)">文字数で</button><button class="split-mode-tab" onclick="setSM('delim',this)">記号で</button><button class="split-mode-tab" onclick="setSM('count',this)">分割数で</button></div>
-<div class="split-settings">
-<div class="split-field" id="spCntF" style="display:none"><label>分割数</label><input type="number" id="spCnt" value="2" min="2" max="20"></div>
-<div class="split-field" id="spChrF"><label>1パートの目安</label><input type="number" id="spChr" value="1500" min="500" step="500"></div>
-<div class="split-field" id="spDlmF" style="display:none"><label>区切り文字</label><input class="input-text" id="spDlm" placeholder="例：＊＊＊　◇◇◇　：" style="width:200px;font-family:var(--font-mincho);padding:8px 12px"></div>
-<div style="display:flex;gap:6px;align-items:center"><button class="btn btn-primary btn-sm" onclick="runSplit()"><span class="mi mi-xs">content_cut</span>分割</button><button class="btn btn-secondary btn-sm" onclick="clearSplit()" style="color:#c9584a;border-color:#f0d5d1"><span class="mi mi-xs">delete_outline</span>クリア</button></div></div>
-<div class="split-results" id="spRes"><p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p></div>
-</section>
-</main>
-
-<div class="modal-overlay" id="mOvl" onclick="if(event.target===this)closeMod()"><div class="modal-panel"><div class="modal-header"><h3 id="mTitle"></h3><button class="modal-close" onclick="closeMod()"><span class="mi">close</span></button></div><div id="mCont"></div></div></div>
-<div class="yure-popup" id="yPop" style="display:none"></div>
-<div class="confirm-overlay" id="confOvl"><div class="confirm-box"><p id="confMsg"></p><div class="confirm-preview" id="confPrev"></div><div class="confirm-btns"><button class="btn btn-secondary btn-sm" onclick="confCancel()"><span class="mi mi-xs">close</span>キャンセル</button><button class="btn btn-primary btn-sm" onclick="confOk()"><span class="mi mi-xs">check</span>書き換える</button></div></div></div>
-<div class="toast" id="toast"></div>
-
-<script>
-const D_YURE=[['ため','為'],['ください','下さい'],['いただく','頂く'],['できる','出来る'],['すべて','全て'],['わかる','分かる'],['いう','言う'],['みる','見る'],['ほう','方'],['わけ','訳'],['ほど','程']];
-const D_NG=['胸がぎゅっと','心臓がバクバク','どうしよう','ということ','かもしれない','気がする','目が合う','視線','息を呑む'];
-let yureRules=[],ngRules=[],rubyRules=[],fmt='',splitMode='chars',issues=[],ignored=new Set();
-
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
-    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');document.getElementById('panel-'+b.dataset.tab).classList.add('active');
-  }));
-  document.getElementById('sToggle').addEventListener('click',()=>{const d=document.getElementById('sBody');d.classList.toggle('open');document.getElementById('sToggle').innerHTML=d.classList.contains('open')?'<span class="mi mi-sm">settings</span>書式設定を閉じる':'<span class="mi mi-sm">settings</span>書式設定を開く';});
-  const s=document.getElementById('srcEditor');
-  s.addEventListener('input',()=>{upPrev();upCt();});
-  const sv=ls('novelcraft_src');if(sv){s.value=sv;upPrev();upCt();}
-  yureRules=lj('novelcraft_yure')||[...D_YURE];rYure();
-  ngRules=lj('novelcraft_ng')||[...D_NG];rNg();
-  rubyRules=lj('novelcraft_ruby')||[];rRuby();
-  document.addEventListener('click',e=>{if(!e.target.closest('.yure-popup')&&!e.target.closest('.hl-yure')&&!e.target.closest('.hl-gobi')&&!e.target.closest('.hl-ng'))hPop();});
-});
-function ls(k){return localStorage.getItem(k)}
-function lj(k){try{const v=ls(k);return v?JSON.parse(v):null}catch(e){return null}}
-function tog(id){document.getElementById(id+'Toggle').classList.toggle('open');document.getElementById(id+'Body').classList.toggle('open');}
-
-function openMod(t){
-  upPrev();const ti=document.getElementById('mTitle'),co=document.getElementById('mCont');
-  if(t==='preview'){ti.innerHTML='<span class="mi mi-sm">auto_fix_high</span>完成版';co.innerHTML='<div class="output-area" style="min-height:250px">'+eH(fmt)+'</div><div class="btn-bar"><button class="btn btn-primary btn-sm" onclick="applyToSrc();closeMod()"><span class="mi mi-xs">check</span>原文に反映</button><button class="btn btn-secondary btn-sm" onclick="cpOut()"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="expTxt(\'out\')"><span class="mi mi-xs">download</span>TXT</button></div>';}
-  else if(t==='proof'){ti.innerHTML='<span class="mi mi-sm">search</span>チェック結果';co.innerHTML='<div class="proof-summary">'+(document.getElementById('proofSum')?.innerHTML||'')+'</div><div class="output-area" style="min-height:200px;margin-top:12px;line-height:2.2">'+(document.getElementById('proofText')?.innerHTML||'')+'</div>';}
-  document.getElementById('mOvl').classList.add('show');document.body.style.overflow='hidden';
-}
-function closeMod(){document.getElementById('mOvl').classList.remove('show');document.body.style.overflow='';}
-function countChars(t){const m=document.getElementById('countMode')?.value||'none';if(m==='none')return t.replace(/[\n\r\s　]/g,'').length;if(m==='noline')return t.replace(/[\s　]/g,'').length;if(m==='nospace')return t.replace(/[\n\r]/g,'').length;return t.length;}
-function upCt(){document.getElementById('srcCount').textContent=countChars(document.getElementById('srcEditor').value).toLocaleString();}
-
-// Format
-function fmtT(t){
-  const oA=document.getElementById('optAlpha').value,oN=document.getElementById('optNum').value,oS=document.getElementById('optSym').value;
-  if(oA==='full')t=t.replace(/[A-Za-z]/g,c=>String.fromCharCode(c.charCodeAt(0)+0xFEE0));
-  if(oA==='half')t=t.replace(/[Ａ-Ｚａ-ｚ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
-  if(oN==='full')t=t.replace(/[0-9]/g,c=>String.fromCharCode(c.charCodeAt(0)+0xFEE0));
-  if(oN==='half')t=t.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
-  if(oS==='full'){t=t.replace(/([!?]{2,})/g,m=>'__C__'+m+'__C__');t=t.replace(/!/g,'！').replace(/\?/g,'？');t=t.replace(/__C__(.+?)__C__/g,(m,p)=>p.replace(/！/g,'!').replace(/？/g,'?'));}
-  if(oS==='half')t=t.replace(/！/g,'!').replace(/？/g,'?');
-  if(document.getElementById('optBP').checked)t=t.replace(/。([」』）\]])/g,'$1');
-  if(document.getElementById('optLD').checked){t=t.replace(/…{1,}/g,'……');t=t.replace(/\.{3,}/g,'……');t=t.replace(/—{1,}/g,'——');t=t.replace(/ー{2,}/g,'——');}
-  if(document.getElementById('optSS').checked){const parts=t.split(/(《[^》]*》)/g);t=parts.map((s,i)=>i%2===0?s.replace(/([！？!?]+)(?=[^\s！？!?」』）\]\n])/g,'$1　'):s).join('');}  
-  rubyRules.forEach(([k,r])=>{t=t.replace(new RegExp(eR(k),'g'),'|'+k+'《'+r+'》');});
-  const ls=t.split('\n'),res=[];
-  for(let i=0;i<ls.length;i++){let l=ls[i];
-    if(document.getElementById('optSB').checked&&/^[\s]*[＊\*✳☆★◇◆◎○●▽△▼▲♦♢♣♠♡♥※＃#─━═]+[\s]*$/.test(l)&&l.trim().length>0){if(res.length>0&&res[res.length-1].trim()!=='')res.push('');res.push(l);if(i+1<ls.length&&ls[i+1].trim()!=='')res.push('');continue;}
-    if(document.getElementById('optIndent').checked&&l.trim().length>0&&!/^[\s　「『（【]/.test(l))l='　'+l;
-    // 括弧自動補完：行内で開き数>閉じ数なら行末に閉じ括弧を補う
-    [['「','」'],['『','』'],['《','》']].forEach(([open,close])=>{
-      const openCt=(l.match(new RegExp(open,'g'))||[]).length;
-      const closeCt=(l.match(new RegExp(close,'g'))||[]).length;
-      if(openCt>closeCt)l+=close.repeat(openCt-closeCt);
-    });
-    // 閉じ記号直前のスペース削除（全角・半角）
-    l=l.replace(/[ 　]+([」』》）】\]）])/g,'$1');
-    // 行末のスペース削除（全角・半角）
-    l=l.replace(/[ 　]+$/,'');
-    res.push(l);}
-  return res.join('\n');
-}
-let diffMode=false;
-function toggleDiff(){
-  diffMode=!diffMode;
-  const btn=document.getElementById('diffToggleBtn');
-  if(btn){btn.style.background=diffMode?'var(--primary)':'';btn.style.color=diffMode?'#fff':'';}
-  upPrev();
-}
-// Myers差分アルゴリズム（1文字単位）
-function computeDiff(a,b){
-  const n=a.length,m=b.length;
-  const max=n+m;
-  const v=new Array(2*max+1).fill(0);
-  const trace=[];
-  for(let d=0;d<=max;d++){
-    trace.push([...v]);
-    for(let k=-d;k<=d;k+=2){
-      let x;
-      if(k===-d||(k!==d&&v[k-1+max]<v[k+1+max])){x=v[k+1+max];}
-      else{x=v[k-1+max]+1;}
-      let y=x-k;
-      while(x<n&&y<m&&a[x]===b[y]){x++;y++;}
-      v[k+max]=x;
-      if(x>=n&&y>=m){
-        // バックトラック
-        const ops=[];
-        let cx=x,cy=y;
-        for(let cd=d;cd>0;cd--){
-          const pv=trace[cd-1];
-          const ck=cx-cy;
-          let pk;
-          if(ck===-cd||(ck!==cd&&pv[ck-1+max]<pv[ck+1+max])){pk=ck+1;}
-          else{pk=ck-1;}
-          const px=pv[pk+max],py=px-pk;
-          while(cx>px&&cy>py){cx--;cy--;ops.push({type:'eq',c:a[cx]});}
-          if(cd>0){
-            if(px===cx){ops.push({type:'ins',c:b[cy-1]});cy--;}
-            else{ops.push({type:'del',c:a[cx-1]});cx--;}
-          }
-        }
-        while(cx>0&&cy>0){cx--;cy--;ops.push({type:'eq',c:a[cx]});}
-        return ops.reverse();
-      }
-    }
-  }
-  return a.split('').map(c=>({type:'del',c})).concat(b.split('').map(c=>({type:'ins',c})));
-}
-function diffHTML(src,out){
-  const ops=computeDiff(src,out);
-  let html='';
-  for(const op of ops){
-    const ch=eH(op.c);
-    if(op.type==='eq'){html+=op.c==='\n'?'\n':ch;}
-    else if(op.type==='ins'){html+='<span class="diff-add">'+ch+'</span>';}
-    else{html+='<span class="diff-del">'+ch+'</span>';}
-  }
-  return html;
-}
-function upPrev(){
-  fmt=fmtT(document.getElementById('srcEditor').value);
-  upCt();
-}
-function applyToSrc(){document.getElementById('srcEditor').value=fmt;upPrev();toast('原文に反映しました');}
-let _fmtHistory=[];
-function formatDirect(){
-  const src=document.getElementById('srcEditor').value;
-  const out=fmtT(src);
-  // 履歴に積む
-  _fmtHistory.push(src);
-  document.getElementById('undoBtn').style.display='';
-  document.getElementById('srcEditor').value=out;
-  upPrev();upCt();
-  const changes=showFmtDiff(src,out);
-  const bracketErrors=showFmtBracket(out);
-  renderFmtResult(changes,bracketErrors);
-  toast('体裁を整えました');
-}
-function undoFormat(){
-  if(!_fmtHistory.length)return;
-  const prev=_fmtHistory.pop();
-  document.getElementById('srcEditor').value=prev;
-  upPrev();upCt();
-  if(!_fmtHistory.length)document.getElementById('undoBtn').style.display='none';
-  document.getElementById('fmtResultPanel').style.display='none';
-  toast('戻しました'+((_fmtHistory.length)?'（あと'+_fmtHistory.length+'回戻せます）':''));
-}
-let _fmtDiffItems=[];
-function showFmtDiff(before,after){
-  // 行単位で変更箇所を検出
-  const bLines=before.split('\n'),aLines=after.split('\n');
-  const changes=[];
-  const maxLen=Math.max(bLines.length,aLines.length);
-  for(let i=0;i<maxLen;i++){
-    const bl=bLines[i]??'',al=aLines[i]??'';
-    if(bl!==al)changes.push({type:'diff',line:i+1,before:bl,after:al});
-  }
-  _fmtDiffItems=changes;
-  return changes;
-}
-function showFmtBracket(text){
-  const pairs=[['「','」'],['『','』'],['《','》']];
-  const errors=[];
-  pairs.forEach(([open,close])=>{
-    let depth=0;const unclosed=[];
-    for(let i=0;i<text.length;i++){
-      if(text[i]===open){depth++;unclosed.push(i);}
-      else if(text[i]===close){
-        if(depth>0){depth--;unclosed.pop();}
-        else{const ctx=text.slice(Math.max(0,i-15),i+1);errors.push({type:'bracket',open,close,pos:i,kind:'extra_close',message:close+'に対応する'+open+'がありません',ctx:'…'+ctx+'…'});}
-      }
-    }
-    unclosed.forEach(pos=>{const ctx=text.slice(pos,Math.min(text.length,pos+16));errors.push({type:'bracket',open,close,pos,kind:'unclosed',message:open+'が閉じられていません',ctx:'…'+ctx+'…'});});
-  });
-  return errors;
-}
-function renderFmtResult(changes,bracketErrors){
-  const panel=document.getElementById('fmtResultPanel');
-  const badges=document.getElementById('fmtResultBadges');
-  const list=document.getElementById('fmtResultList');
-  if(!changes.length&&!bracketErrors.length){panel.style.display='none';return;}
-  // バッジ
-  let bh='';
-  if(changes.length)bh+='<span class="proof-badge diff">変更 '+changes.length+'件</span>';
-  if(bracketErrors.length)bh+='<span class="proof-badge bracket">括弧 '+bracketErrors.length+'件</span>';
-  badges.innerHTML=bh;
-  // diffをラベルでグループ化
-  const groups=[];// [{labels, items:[{before,after,idx}]}]
-  changes.forEach((item,i)=>{
-    const labels=detectChangeLabels(item.before,item.after);
-    const key=labels.join('・');
-    const existing=groups.find(g=>g.key===key);
-    if(existing){existing.items.push({...item,idx:i});}
-    else{groups.push({key,labels,items:[{...item,idx:i}]});}
-  });
-  // グループHTML
-  let html=groups.map(g=>{
-    const labelHtml='<div style="font-size:11px;color:var(--text3);margin-bottom:4px">'+eH(g.labels.join('・'))+'</div>';
-    const snippets=g.items.map(item=>{
-      const bDisp=item.before===''?'（空行）':eH(item.before.slice(0,60))+(item.before.length>60?'…':'');
-      const aDisp=item.after===''?'（空行）':eH(item.after.slice(0,60))+(item.after.length>60?'…':'');
-      return '<div onclick="fmtDiffJump('+item.idx+')" style="cursor:pointer;margin-bottom:4px">'
-        +'<div class="proof-snippet" style="color:var(--text3);margin-bottom:2px">'+bDisp+'</div>'
-        +'<div class="proof-snippet" style="color:var(--primary-dark);font-weight:600;border-color:var(--primary-light)">'+aDisp+'</div>'
-        +'</div>';
-    }).join('');
-    return '<div class="proof-item" style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 0;cursor:default">'
-      +labelHtml+snippets+'</div>';
-  }).join('');
-  // 括弧エラー
-  html+=bracketErrors.map((item,i)=>{
-    const target=item.kind==='unclosed'?item.open:item.close;
-    const marked=eH(item.ctx).replace(eH(target),'<mark style="background:rgba(124,77,190,.2);color:#7c4dbe;border-radius:2px;font-style:normal;padding:0 2px">'+eH(target)+'</mark>');
-    return '<div class="proof-item" onclick="bracketJump('+item.pos+')" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:4px">'
-      +'<div style="display:flex;align-items:center;gap:6px">'
-      +'<span class="proof-tag bracket">括弧</span>'
-      +'<span style="font-size:13px">'+item.message+'</span>'
-      +'</div>'
-      +'<div class="proof-snippets" style="width:100%">'
-      +'<div class="proof-snippet" style="white-space:normal">'+marked+'</div>'
-      +'</div>'
-      +'</div>';
-  }).join('');
-  list.innerHTML=html;
-  panel.style.display='block';
-}
-function fmtDiffJump(i){
-  const c=_fmtDiffItems[i];if(!c)return;
-  const ta=document.getElementById('srcEditor');
-  const lines=ta.value.split('\n');
-  let pos=0;
-  for(let j=0;j<c.line-1&&j<lines.length;j++)pos+=lines[j].length+1;
-  ta.focus();
-  ta.setSelectionRange(pos,pos+(lines[c.line-1]||'').length);
-  const lineH=ta.scrollHeight/Math.max(lines.length,1);
-  ta.scrollTop=Math.max(0,(c.line-5)*lineH);
-  const items=document.getElementById('fmtResultList').querySelectorAll('.proof-item');
-  items.forEach((el,idx)=>{el.style.background=idx===i?'var(--primary-pale)':'';});
-  setTimeout(()=>{if(items[i])items[i].style.background='';},1500);
-}
-function detectChangeLabels(before,after){
-  const labels=[];
-  // 字下げ追加
-  if(!before.startsWith('　')&&after.startsWith('　'))labels.push('字下げ追加');
-  // 空行追加
-  if(before===''&&after!=='')labels.push('空行追加');
-  if(before!==''&&after==='')labels.push('空行削除');
-  // スペース削除（行末・閉じ記号前）※字下げ分の先頭全角スペースは除外
-  const stripIndent=s=>s.startsWith('　')?s.slice(1):s;
-  const spBefore=(stripIndent(before).match(/[ 　]/g)||[]).length;
-  const spAfter=(stripIndent(after).match(/[ 　]/g)||[]).length;
-  if(spBefore>spAfter)labels.push('スペース削除');
-  if(spBefore<spAfter)labels.push('スペース追加');
-  // 括弧追加
-  ['」','』','》'].forEach(c=>{
-    const bc=(before.match(new RegExp(c,'g'))||[]).length;
-    const ac=(after.match(new RegExp(c,'g'))||[]).length;
-    if(ac>bc)labels.push(c+'追加');
-  });
-  // 句点削除（」直前の。削除）
-  if(/。[」』）]/.test(before)&&!/。[」』）]/.test(after))labels.push('句点削除');
-  // 記号の全角化
-  if(/[!?]/.test(before)&&!/[!?]/.test(after)&&/[！？]/.test(after))labels.push('記号全角化');
-  // 記号の半角化
-  if(/[！？]/.test(before)&&!/[！？]/.test(after)&&/[!?]/.test(after))labels.push('記号半角化');
-  // 数字全角化
-  if(/[0-9]/.test(before)&&!/[0-9]/.test(after))labels.push('数字全角化');
-  // 数字半角化
-  if(/[０-９]/.test(before)&&!/[０-９]/.test(after))labels.push('数字半角化');
-  // 英字全角化
-  if(/[A-Za-z]/.test(before)&&!/[A-Za-z]/.test(after))labels.push('英字全角化');
-  // 英字半角化
-  if(/[Ａ-Ｚａ-ｚ]/.test(before)&&!/[Ａ-Ｚａ-ｚ]/.test(after))labels.push('英字半角化');
-  // リーダー・ダッシュ統一
-  if((/…/.test(before)||/\.{3}/.test(before))&&/……/.test(after))labels.push('リーダー統一');
-  if(/—/.test(before)&&/——/.test(after))labels.push('ダッシュ統一');
-  // ルビ追加
-  if(!before.includes('《')&&after.includes('《'))labels.push('ルビ追加');
-  // その他（上記に当てはまらない場合）
-  if(!labels.length)labels.push('書式変更');
-  return labels;
-}
-function closeFmtDiff(){document.getElementById('fmtResultPanel').style.display='none';}
-
-// Proofread
-function runProof(){
-  const text=fmt||document.getElementById('srcEditor').value;
-  const srcText=document.getElementById('srcEditor').value;
-  issues=[];ignored=new Set();
-  const sens=+document.getElementById('gobiSens').value;
-  // 原文を句点で分割してインデックス付きマップを作成
-  const srcSentMap=[];
-  srcText.split(/\n\n+/).forEach(para=>{
-    para.split('\n').forEach(line=>{
-      const trimmed=line.trim();
-      if(!trimmed)return;
-      trimmed.split(/(?<=[。！？])/).forEach(p=>{
-        const s=p.trim();
-        if(s.length>=2)srcSentMap.push(s);
-      });
-      if(!trimmed.split(/(?<=[。！？])/).some(p=>/[。！？]/.test(p))&&trimmed.length>=2)
-        srcSentMap.push(trimmed);
-    });
-  });
-  // 完成版の文から原文の対応文を探す関数
-  const toHalf=s=>s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
-                   .replace(/[Ａ-Ｚａ-ｚ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
-                   .replace(/！/g,'!').replace(/？/g,'?');
-  function findSrcSent(fmtSent){
-    const stripped=fmtSent.replace(/^[　\s]+/,'');
-    // 1) そのまま
-    let m=srcSentMap.find(s=>s===stripped);
-    if(m)return m;
-    // 2) 半角正規化して比較
-    const halfS=toHalf(stripped);
-    m=srcSentMap.find(s=>toHalf(s)===halfS);
-    if(m)return m;
-    // 3) 末尾句点除いて完全一致比較（部分一致は避ける）
-    const noEnd=stripped.replace(/[。！？!?]+$/,'');
-    if(noEnd.length>=4){
-      m=srcSentMap.find(s=>s.replace(/[。！？]+$/,'')=== noEnd);
-      if(m)return m;
-      m=srcSentMap.find(s=>toHalf(s.replace(/[。！？]+$/,''))===toHalf(noEnd));
-      if(m)return m;
-    }
-    return stripped;
-  }
-
-  // Gobi: check consecutive sentences (地の文のみ、段落内で連続するもの)
-  // 段落ごとにリセットして判定する
-  const paragraphs=text.split(/\n\n+/);
-  paragraphs.forEach(para=>{
-    const paraLines=para.split('\n');
-    const paraSents=[];
-    paraLines.forEach(line=>{
-      const trimmed=line.trim();
-      if(!trimmed)return;
-      if(/^[「『]/.test(trimmed))return;
-      const parts=trimmed.split(/(?<=[。！？])/);
-      const hasPunct=parts.some(p=>/[。！？]/.test(p));
-      parts.forEach(p=>{
-        const s=p.trim();
-        if(s.length>=2){
-          if(/^[「『]/.test(s))return;
-          const body=s.replace(/[。！？]+$/,'');
-          if(body.length>=1)paraSents.push({ending:body.slice(-1),text:s,snippet:body.slice(-8)});
-        }
-      });
-      // 句点なし行（文末が句点以外で終わる行）は行全体を1文として追加
-      if(!hasPunct&&trimmed.length>=2){
-        // すでにpartsでpushしているので重複チェック
-        // parts[0]がtrimmedと同じ場合はすでにpush済み → スキップ
-        if(parts.length===1&&parts[0].trim()===trimmed){/* 既にpush済 */}
-        else{
-          const body=trimmed.replace(/[。！？]+$/,'');
-          if(body.length>=1)paraSents.push({ending:body.slice(-1),text:trimmed,snippet:body.slice(-8)});
-        }
-      }
-    });
-    // 段落内で連続チェック
-    for(let i=0;i<=paraSents.length-sens;i++){
-      let consecutive=true;
-      for(let j=1;j<sens;j++){if(paraSents[i+j].ending!==paraSents[i].ending){consecutive=false;break;}}
-      if(consecutive){
-        let c=sens;while(i+c<paraSents.length&&paraSents[i+c].ending===paraSents[i].ending)c++;
-        const snippets=paraSents.slice(i,i+c).map(s=>s.snippet);
-        const snippetTexts=paraSents.slice(i,i+c).map(s=>s.text);
-        issues.push({type:'gobi',ending:paraSents[i].ending,count:c,message:'「'+paraSents[i].ending+'」が'+c+'文連続',snippets:snippets,snippetTexts:snippetTexts});
-        i+=c-1;
-      }
-    }
-  });
-
-  // Yure: 除外なし（文中どこにあっても全部検出）
-  yureRules.forEach(([a,b])=>{
-    const getOccurrences=(w)=>{
-      const re=new RegExp(eR(w),'g');const res=[];let m;
-      while((m=re.exec(text))!==null){
-        res.push(m.index);
-      }
-      return res;
-    };
-    const posA=getOccurrences(a),posB=getOccurrences(b);
-    if(posA.length===0&&posB.length===0)return;
-    if(posA.length===0||posB.length===0)return; // 片方だけなら揺れなし
-    const mkSnips=(positions,w)=>positions.map(idx=>({pos:idx,word:w,ctx:text.slice(Math.max(0,idx-12),idx)+'【'+w+'】'+text.slice(idx+w.length,idx+w.length+12)}));
-    issues.push({type:'yure',wordA:a,wordB:b,countA:posA.length,countB:posB.length,
-      snippetsA:mkSnips(posA,a),snippetsB:mkSnips(posB,b),
-      message:'「'+a+'」('+posA.length+') と「'+b+'」('+posB.length+') が混在'});
-  });
-
-  // NG list: distance-based (直近X字以内に再登場したら警告)
-  const ngDist=+document.getElementById('ngDist').value;
-  ngRules.forEach(r=>{
-    const w=typeof r==='string'?r:(r.w||r);
-    const re=new RegExp(eR(w),'g');
-    const positions=[];let m;
-    while((m=re.exec(text))!==null)positions.push(m.index);
-    if(positions.length===0)return;
-    const pairs=[];
-    for(let i=1;i<positions.length;i++){
-      const dist=positions[i]-positions[i-1];
-      if(dist<=ngDist)pairs.push({from:positions[i-1],to:positions[i],dist:dist});
-    }
-    if(pairs.length===0)return;
-    const minDist=Math.min(...pairs.map(p=>p.dist));
-    // ペアごとにスニペット生成（from側とto側）
-    const pairSnips=pairs.map(p=>({
-      from:p.from,to:p.to,dist:p.dist,
-      ctxFrom:text.slice(Math.max(0,p.from-10),p.from)+'【'+w+'】'+text.slice(p.from+w.length,p.from+w.length+10),
-      ctxTo:text.slice(Math.max(0,p.to-10),p.to)+'【'+w+'】'+text.slice(p.to+w.length,p.to+w.length+10)
-    }));
-    issues.push({type:'ng',word:w,count:positions.length,pairs:pairs,pairSnips:pairSnips,message:'「'+w+'」… 直近'+minDist.toLocaleString()+'字以内に再登場（計'+positions.length+'回）'});
-  });
-
-  // Bracket check: 「」『』《》の対応チェック
-  const bracketPairs=[['「','」'],['『','』'],['《','》']];
-  bracketPairs.forEach(([open,close])=>{
-    let depth=0;
-    const unclosed=[];
-    for(let i=0;i<text.length;i++){
-      if(text[i]===open){depth++;unclosed.push(i);}
-      else if(text[i]===close){
-        if(depth>0){depth--;unclosed.pop();}
-        else{
-          // 閉じ括弧に対応する開き括弧なし
-          const ctx=text.slice(Math.max(0,i-15),i+1);
-          issues.push({type:'bracket',open,close,pos:i,kind:'extra_close',
-            message:close+'に対応する'+open+'がありません',
-            ctx:'…'+ctx+'…'});
-        }
-      }
-    }
-    unclosed.forEach(pos=>{
-      const ctx=text.slice(pos,Math.min(text.length,pos+16));
-      issues.push({type:'bracket',open,close,pos,kind:'unclosed',
-        message:open+'が閉じられていません',
-        ctx:'…'+ctx+'…'});
-    });
-  });
-
-  renderProof(text);
-}
-
-function renderProof(text){
-  const sum=document.getElementById('proofSum'),tEl=document.getElementById('proofText');
-  const ph=document.getElementById('proofPlaceholder');
-  if(ph)ph.style.display='none';
-  if(!issues.length){sum.style.display='block';sum.innerHTML='<p style="color:var(--success);font-weight:500;display:flex;align-items:center;gap:6px"><span class="mi mi-sm">check_circle</span>問題なし！</p>';tEl.style.display='none';return;}
-
-  // Count by type
-  const gobiCt=issues.filter(i=>i.type==='gobi'&&!isIg(i)).length;
-  const yureCt=issues.filter(i=>i.type==='yure'&&!isIg(i)).length;
-  const ngCt=issues.filter(i=>i.type==='ng'&&!isIg(i)).length;
-  const bracketCt=issues.filter(i=>i.type==='bracket'&&!isIg(i)).length;
-
-  let h='<div class="proof-badges">';
-  if(gobiCt)h+='<span class="proof-badge gobi">語尾 '+gobiCt+'件</span>';
-  if(yureCt)h+='<span class="proof-badge yure">表記ゆれ '+yureCt+'件</span>';
-  if(ngCt)h+='<span class="proof-badge ng">NG '+ngCt+'件</span>';
-  if(bracketCt)h+='<span class="proof-badge" style="background:#f0eafb;color:#7c4dbe">括弧 '+bracketCt+'件</span>';
-  h+='</div>';
-  h+='<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn btn-secondary btn-sm" onclick="resetIg()"><span class="mi mi-xs">refresh</span>無視リセット</button></div>';
-
-  issues.forEach((is,i)=>{
-    const ig=isIg(is);
-    const hasSnips=!ig&&(
-      (is.type==='yure'&&(is.snippetsA||is.snippetsB))||
-      (is.type==='ng'&&is.pairSnips&&is.pairSnips.length)||
-      (is.type==='gobi'&&((is.snippetTexts&&is.snippetTexts.length)||(is.snippets&&is.snippets.length)))||
-      (is.type==='bracket'&&is.ctx)
-    );
-    // 項目タップ：スニペットあり→展開/折りたたみ、なし→ジャンプ
-    const clickAct=hasSnips?'togSnip('+i+')':'jumpTo('+i+')';
-    h+='<div class="proof-item'+(ig?' ignored':'')+'" id="pi-'+i+'" onclick="'+clickAct+'" style="flex-wrap:wrap;cursor:'+(ig?'default':'pointer')+'">';
-    h+='<span class="proof-tag '+is.type+'">'+(({gobi:'語尾',yure:'表記ゆれ',ng:'NG',bracket:'括弧'})[is.type]||is.type)+'</span>';
-    h+='<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+is.message+'</span>';
-    h+='<span class="proof-actions">';
-    if(hasSnips){
-      h+='<span class="mi" id="pi-chev-'+i+'" style="font-size:16px;color:var(--text3);transition:transform .2s">expand_more</span>';
-    }
-    if(ig){
-      h+='<button class="btn-icon" title="復元" onclick="event.stopPropagation();igIssue('+i+')" style="color:var(--text3)"><span class="mi" style="font-size:14px">visibility</span></button>';
-    }else{
-      h+='<button class="btn-icon" title="無視" onclick="event.stopPropagation();igIssue('+i+')"><span class="mi" style="font-size:14px">visibility_off</span></button>';
-    }
-    h+='</span>';
-    if(hasSnips){
-      h+='<div class="proof-snippets" id="pi-snip-'+i+'" style="width:100%;display:none">';
-      if(is.type==='gobi'){
-        const texts=is.snippetTexts&&is.snippetTexts.length?is.snippetTexts:is.snippets||[];
-        texts.forEach((st,si)=>{
-          const enc=eH(st);
-          const marked=enc.replace(new RegExp(eH(is.ending)+'$'),'<mark>'+eH(is.ending)+'</mark>');
-          h+='<div class="proof-snippet" data-snip="'+eH(st)+'" data-di="'+i+'" onclick="event.stopPropagation();gobiSnipPopEl(event,this)" title="タップして編集">'+marked+'</div>';
-        });
-      }else if(is.type==='yure'){
-        [...(is.snippetsA||[]),...(is.snippetsB||[])].forEach(s=>{
-          const ctx=eH(s.ctx).replace('【'+eH(s.word)+'】','<mark>'+eH(s.word)+'</mark>');
-          h+='<div class="proof-snippet" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(s.word)+'\','+s.pos+','+i+')" title="タップして編集">…'+ctx+'…</div>';
-        });
-      }else if(is.type==='ng'){
-        // 重複なくすべての出現位置を順に表示
-        const shownPos=new Set();
-        is.pairSnips.forEach(ps=>{
-          const cF=eH(ps.ctxFrom).replace('【'+eH(is.word)+'】','<mark>'+eH(is.word)+'</mark>');
-          const cT=eH(ps.ctxTo).replace('【'+eH(is.word)+'】','<mark>'+eH(is.word)+'</mark>');
-          if(!shownPos.has(ps.from)){
-            shownPos.add(ps.from);
-            h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.from+','+i+')" title="タップして編集">…'+cF+'…</div>';
-          }
-          if(!shownPos.has(ps.to)){
-            shownPos.add(ps.to);
-            h+='<div class="proof-snippet ng-snip" onclick="event.stopPropagation();snipEditPop(event,this,\''+eH(is.word)+'\','+ps.to+','+i+')" title="タップして編集（'+ps.dist+'字後）">↳ '+ps.dist+'字後　…'+cT+'…</div>';
-          }
-        });
-      }else if(is.type==='bracket'){
-        const marked=eH(is.ctx).replace(eH(is.kind==='unclosed'?is.open:is.close),'<mark>$&</mark>');
-        h+='<div class="proof-snippet" onclick="event.stopPropagation();bracketJump('+is.pos+')" title="タップして該当箇所へ">'+marked+'</div>';
-      }
-      h+='</div>';
-    }
-    h+='</div>';
-  });
-  sum.innerHTML=h;sum.style.display='block';
-
-  // Highlighted text: プレースホルダ方式でspanを安全に埋め込む
-  // 1) マーク位置を収集
-  const marks=[];
-  issues.forEach((is,i)=>{
-    if(isIg(is))return;
-    if(is.type==='yure'){
-      [is.wordA,is.wordB].forEach(w=>{
-        const alt=w===is.wordA?is.wordB:is.wordA;
-        let idx=0;
-        while((idx=text.indexOf(w,idx))>=0){
-          marks.push({start:idx,end:idx+w.length,cls:'hl-yure',di:i,w:w,alt:alt});
-          idx+=w.length;
-        }
-      });
-    }else if(is.type==='gobi'&&is.snippets){
-      is.snippets.forEach(sn=>{let idx=0;while((idx=text.indexOf(sn,idx))>=0){marks.push({start:idx,end:idx+sn.length,cls:'hl-gobi',di:i});idx+=sn.length;}});
-    }else if(is.type==='ng'&&is.pairs){
-      // 近すぎるペアに関わる位置だけをハイライト
-      const hlPos=new Set();
-      is.pairs.forEach(p=>{hlPos.add(p.from);hlPos.add(p.to);});
-      hlPos.forEach(idx=>{marks.push({start:idx,end:idx+is.word.length,cls:'hl-ng',di:i});});
-    }
-  });
-  // 2) 位置順にソート（重複しないよう先勝ち）
-  marks.sort((a,b)=>a.start-b.start);
-  // 3) テキストをチャンクに分割してHTMLを組み立て
-  let html='',pos=0;
-  marks.forEach(m=>{
-    if(m.start<pos)return; // 重複スキップ
-    html+=eH(text.slice(pos,m.start));
-    const inner=eH(text.slice(m.start,m.end));
-    if(m.cls==='hl-yure'){
-      html+='<span class="hl-yure" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(m.w)+'" data-alt="'+eH(m.alt)+'" onclick="sPop(event,this)">'+inner+'</span>';
-    }else if(m.cls==='hl-gobi'){
-      html+='<span class="hl-gobi" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(text.slice(m.start,m.end))+'" onclick="gPop(event,this)">'+inner+'</span>';
-    }else{
-      html+='<span class="hl-ng" data-i="'+m.di+'" data-pos="'+m.start+'" data-w="'+eH(text.slice(m.start,m.end))+'" onclick="nPop(event,this)">'+inner+'</span>';
-    }
-    pos=m.end;
-  });
-  html+=eH(text.slice(pos));
-  tEl.innerHTML=html;tEl.style.display='block';
-}
-
-function isIg(is){return ignored.has(is.type+'|'+(is.wordA||is.word||is.ending||''));}
-function igIssue(i){
-  const is=issues[i];
-  const key=is.type+'|'+(is.wordA||is.word||is.ending||'');
-  if(ignored.has(key)){ignored.delete(key);toast('復元しました');}
-  else{ignored.add(key);toast('無視しました');}
-  renderProof(fmt||document.getElementById('srcEditor').value);
-}
-function resetIg(){ignored=new Set();renderProof(fmt||document.getElementById('srcEditor').value);toast('リセットしました');}
-function bracketJump(pos){
-  const ta=document.getElementById('srcEditor');
-  ta.focus();
-  ta.setSelectionRange(pos,pos+1);
-  const lineH=ta.scrollHeight/Math.max(ta.value.split('\n').length,1);
-  const line=ta.value.slice(0,pos).split('\n').length;
-  ta.scrollTop=Math.max(0,(line-5)*lineH);
-}
-function jumpTo(i){const el=document.querySelector('[data-i="'+i+'"]');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});hlEl(el);}}
-function jumpToPos(pos,di){
-  // data-i と data-pos が一致するspanを探す、なければdata-iで最初のものへ
-  const tEl=document.getElementById('proofText');
-  if(!tEl)return;
-  const spans=tEl.querySelectorAll('[data-i="'+di+'"]');
-  // spanのテキスト位置を逆算して最も近いものを選ぶ
-  let best=null,bestDist=Infinity;
-  spans.forEach(s=>{
-    const sp=+s.dataset.pos;
-    if(!isNaN(sp)){const d=Math.abs(sp-pos);if(d<bestDist){bestDist=d;best=s;}}
-  });
-  const target=best||spans[0];
-  if(target){target.scrollIntoView({behavior:'smooth',block:'center'});hlEl(target);}
-}
-function togSnip(i){
-  const snip=document.getElementById('pi-snip-'+i);
-  const chev=document.getElementById('pi-chev-'+i);
-  if(!snip)return;
-  const open=snip.style.display==='none';
-  snip.style.display=open?'flex':'none';
-  if(chev)chev.style.transform=open?'rotate(180deg)':'';
-}
-function hlEl(el){el.style.outline='3px solid var(--primary)';el.style.outlineOffset='2px';setTimeout(()=>{el.style.outline='';el.style.outlineOffset='';},2000);}
-
-// 本文ハイライトタップ → 表記ゆれ編集ポップアップを開く
-function sPop(e,el){
-  e.stopPropagation();
-  const di=+el.dataset.i;
-  const pos=+el.dataset.pos;
-  const word=el.dataset.w||el.textContent;
-  const alt=el.dataset.alt||'';
-
-  const p=document.getElementById('yPop');
-  // posは完成版の位置なので、完成版テキストで文脈表示
-  const fmtText=fmt||document.getElementById('srcEditor').value;
-  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
-
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
-  html+='<div style="margin-bottom:6px">'
-    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="width:100%;font-size:13px;margin-bottom:6px" placeholder="語句を変更">'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="snipEdit(\''+eH(word)+'\','+pos+','+di+')"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
-    +'</div>';
-  if(alt){
-    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(word)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(alt)+'」に統一</button>';
-    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(alt)+'" data-to="'+eH(word)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(word)+'」に統一</button>';
-  }
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  showPop(p,el);
-  setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},80);
-}
-
-// スニペットクリック：編集ポップアップのみ（ジャンプはボタンから）
-function snipEditPop(e,el,word,pos,di){
-  e.stopPropagation();
-  const p=document.getElementById('yPop');
-  const fmtText=fmt||document.getElementById('srcEditor').value;
-  const is=issues[di];
-  const isNg=is&&is.type==='ng';
-  // 文脈表示は完成版posで
-  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
-  // NG文の取得：gPopと同じ方式（60字以内で句点/改行を文境界とする）
-  let sentence='';
-  if(isNg){
-    const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
-    const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
-    const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('！'),fBefore.lastIndexOf('？'),fBefore.lastIndexOf('\n'))+1;
-    const fSentEnd=fAfter.search(/[。！？\n]/);
-    const raw=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
-    sentence=raw.replace(/^[　\s]+/,'');
-  }
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
-  html+='<div style="margin-bottom:6px">'
-    +'<input class="input-text" id="snipEditVal" value="'+eH(word)+'" style="width:100%;font-size:13px;margin-bottom:6px" placeholder="語句を変更">'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" data-word="'+eH(word)+'" data-pos="'+pos+'" data-di="'+di+'" onclick="snipEditFromBtn(event,this)"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
-    +'</div>';
-  if(isNg){
-    html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
-      +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(sentence)+'</textarea>'
-      +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
-  }
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpToPos('+pos+','+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  if(isNg){const ta=document.getElementById('snipSentVal');if(ta)ta.dataset.orig=sentence;}
-  showPop(p,el);
-  setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},80);
-}
-// data属性からword/pos/diを読んでsnipEditを呼ぶラッパー
-function snipEditFromBtn(e,btn){
-  if(e)e.stopPropagation();
-  snipEdit(btn.dataset.word||'', +btn.dataset.pos, +btn.dataset.di);
-}
-function snipEdit(word,pos,di){
-  const to=document.getElementById('snipEditVal').value.trim();
-  if(!to||to===word){hPop();return;}
-  const s=document.getElementById('srcEditor');
-  const src=s.value;
-  const searchFrom=Math.max(0,pos-200);
-  const searchArea=src.slice(searchFrom,Math.min(src.length,pos+200));
-  const localIdx=searchArea.indexOf(word);
-  if(localIdx<0){toast('位置がずれています。チェックを再実行してください');return;}
-  const actualPos=searchFrom+localIdx;
-  // ポップアップ内をプレビューに切り替え
-  const p=document.getElementById('yPop');
-  const prevTitle=p.querySelector('.yure-popup-title')?.outerHTML||'';
-  let html=prevTitle;
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:4px">変更プレビュー：</div>';
-  html+='<div style="font-family:var(--font-mincho);font-size:13px;line-height:1.8;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px">'
-    +'<span style="color:var(--text3);text-decoration:line-through">'+eH(word)+'</span>'
-    +'<span style="color:var(--text3);padding:0 6px">→</span>'
-    +'<span style="color:var(--primary-dark);font-weight:600">'+eH(to)+'</span>'
-    +'</div>';
-  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipEditCommit()"><span class="mi mi-xs">check</span>確定して変更</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipEditBack(event)"><span class="mi mi-xs">arrow_back</span>戻る</button>';
-  p.innerHTML=html;
-  p.dataset.commitTo=to;
-  p.dataset.commitPos=actualPos;
-  p.dataset.commitWord=word;
-  p.dataset.commitOrigWord=word;
-  p.dataset.commitEditedWord=to;
-  p.dataset.commitSrcPos=pos;
-  p.dataset.commitDi=di;
-}
-// 1箇所変更確定
-function snipEditCommit(){
-  const p=document.getElementById('yPop');
-  const to=p.dataset.commitTo||'';
-  const actualPos=+p.dataset.commitPos;
-  const word=p.dataset.commitWord||'';
-  const s=document.getElementById('srcEditor');
-  hPop();
-  s.value=s.value.slice(0,actualPos)+to+s.value.slice(actualPos+word.length);
-  upPrev();upCt();toast('1箇所を「'+to+'」に変更',true);runProof();
-}
-// 戻る → 入力欄に戻す
-function snipEditBack(e){
-  if(e)e.stopPropagation();
-  const p=document.getElementById('yPop');
-  const word=p.dataset.commitOrigWord||'';
-  const edited=p.dataset.commitEditedWord||'';
-  const pos=+p.dataset.commitSrcPos;
-  const di=+p.dataset.commitDi;
-  const fmtText=fmt||document.getElementById('srcEditor').value;
-  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
-  html+='<div style="margin-bottom:6px">'
-    +'<input class="input-text" id="snipEditVal" value="'+eH(edited)+'" style="width:100%;font-size:13px;margin-bottom:6px" placeholder="語句を変更">'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" data-word="'+eH(word)+'" data-pos="'+pos+'" data-di="'+di+'" onclick="snipEditFromData(this)"><span class="mi mi-xs">edit</span>この1箇所を変更</button>'
-    +'</div>';
-  const is=issues[di];
-  if(is&&is.type==='yure'){
-    const alt=word===is.wordA?is.wordB:is.wordA;
-    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(word)+'" data-to="'+eH(alt)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(alt)+'」に統一</button>';
-    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="repW(this)" data-from="'+eH(alt)+'" data-to="'+eH(word)+'"><span class="mi mi-xs">find_replace</span>全件「'+eH(word)+'」に統一</button>';
-  }
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" data-pos="'+pos+'" data-di="'+di+'" onclick="hPop();jumpToPos(+this.dataset.pos,+this.dataset.di)"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  setTimeout(()=>{const inp=document.getElementById('snipEditVal');if(inp){inp.focus();inp.select();}},50);
-}
-function snipEditFromData(btn){
-  const word=btn.dataset.word||'';
-  const pos=+btn.dataset.pos;
-  const di=+btn.dataset.di;
-  snipEdit(word,pos,di);
-}
-// 共通：原文から文を取得するヘルパー（キーワードの末尾N字で検索）
-function getSrcSentByKeyword(src, keyword, len){
-  const kw=keyword.replace(/^[　\s]+/,'').replace(/[。！？\s　]+$/,'').slice(-len);
-  if(!kw||kw.length<2)return null;
-  const idx=src.indexOf(kw);
-  if(idx<0)return null;
-  // beforeはキーワード直前まで（最大120字）
-  const beforeStart=Math.max(0,idx-120);
-  const before=src.slice(beforeStart,idx);
-  const sentStartInBefore=Math.max(before.lastIndexOf('。'),before.lastIndexOf('！'),before.lastIndexOf('？'),before.lastIndexOf('\n'))+1;
-  const sentStart=beforeStart+sentStartInBefore;
-  const afterIdx=idx+kw.length;
-  const after=src.slice(afterIdx,afterIdx+60);
-  const sentEnd=after.search(/[。！？\n]/);
-  return {
-    text: src.slice(sentStart,afterIdx)+(sentEnd>=0?after.slice(0,sentEnd+1):''),
-    start: sentStart
-  };
-}
-
-// src文字列を直接受け取る版（チェック時にも使える）
-function resolveSrcSentence2(src, fmtSentence){
-  // idx: マッチ開始位置、len: マッチ長 → その文の文頭〜文末を返す
-  const findSent=(idx,len)=>{
-    // 文頭を探す（idx以前で最後の句点/改行の次）
-    const beforeStart=Math.max(0,idx-200);
-    const before=src.slice(beforeStart,idx);
-    const sentStartRel=Math.max(
-      before.lastIndexOf('。'),before.lastIndexOf('！'),
-      before.lastIndexOf('？'),before.lastIndexOf('\n')
-    )+1;
-    const sentStart=beforeStart+sentStartRel;
-    // 文末を探す（マッチ末尾以降で最初の句点/改行）
-    const afterIdx=idx+len;
-    const after=src.slice(afterIdx,afterIdx+60);
-    const sentEnd=after.search(/[。！？\n]/);
-    return {
-      text: src.slice(sentStart, afterIdx)+(sentEnd>=0?after.slice(0,sentEnd+1):''),
-      start: sentStart
-    };
-  };
-  const toHalf=s=>s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
-                   .replace(/[Ａ-Ｚａ-ｚ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
-                   .replace(/！/g,'!').replace(/？/g,'?');
-  const toFull=s=>s.replace(/[0-9]/g,c=>String.fromCharCode(c.charCodeAt(0)+0xFEE0))
-                   .replace(/[A-Za-z]/g,c=>String.fromCharCode(c.charCodeAt(0)+0xFEE0))
-                   .replace(/!/g,'！').replace(/\?/g,'？');
-  const stripped=fmtSentence.replace(/^[　\s]+/,'');
-  let idx=src.indexOf(stripped);
-  if(idx>=0)return findSent(idx,stripped.length);
-  const fullVer=toFull(stripped);
-  if(fullVer!==stripped){idx=src.indexOf(fullVer);if(idx>=0)return findSent(idx,fullVer.length);}
-  const halfStripped=toHalf(stripped);
-  const halfSrc=toHalf(src);
-  idx=halfSrc.indexOf(halfStripped);
-  if(idx>=0)return findSent(idx,halfStripped.length);
-  const noEnd=stripped.replace(/[。！？!?]+$/,'');
-  if(noEnd.length>=4){
-    idx=src.indexOf(noEnd);if(idx>=0)return findSent(idx,noEnd.length);
-    const noEndFull=toFull(noEnd);
-    if(noEndFull!==noEnd){idx=src.indexOf(noEndFull);if(idx>=0)return findSent(idx,noEndFull.length);}
-  }
-  for(const len of [20,15,10,6]){
-    const found=getSrcSentByKeyword(src,fmtSentence,len);
-    if(found&&found.text)return found;
-  }
-  return null;
-}
-// DOM版（従来のresolveSrcSentenceはこちらに委譲）
-function resolveSrcSentence(fmtSentence){
-  return resolveSrcSentence2(document.getElementById('srcEditor').value, fmtSentence);
-}
-
-// 語尾スニペットタップ（data属性版） → 文ごと書き換えポップアップ
-function gobiSnipPopEl(e,el){
-  const fmtSentence=el.dataset.snip||'';
-  const di=el.dataset.di!=null?+el.dataset.di:null;
-  gobiSnipPop(e,el,fmtSentence,di);
-}
-
-// 語尾スニペットタップ → 文ごと書き換えポップアップ（チェック結果から）
-function gobiSnipPop(e,el,fmtSentence,di){
-  e.stopPropagation();
-  const p=document.getElementById('yPop');
-  // 完成版の文をそのまま表示（余計な原文変換はしない）
-  const displaySent=fmtSentence.replace(/^[　\s]+/,'');
-  const ctx=eH(displaySent.slice(-20));
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">…'+ctx+'</div>';
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
-    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(displaySent)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
-  if(di!=null){
-    html+='<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="hPop();jumpTo('+di+')"><span class="mi mi-xs">arrow_downward</span>該当箇所へ</button>';
-  }
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  document.getElementById('snipSentVal').dataset.orig=displaySent;
-  showPop(p,el);
-  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
-}
-
-// 語尾本文ハイライトタップ → 文ごと書き換えポップアップを表示
-function gPop(e,el){
-  e.stopPropagation();
-  const pos=+el.dataset.pos;
-  const word=el.dataset.w||el.textContent;
-  const p=document.getElementById('yPop');
-  const fmtText=fmt||document.getElementById('srcEditor').value;
-  const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
-  const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
-  const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
-  const fSentEnd=fAfter.search(/[。\n]/);
-  const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
-  const displaySent=fmtSentence.replace(/^[　\s]+/,'');
-  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
-    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(displaySent)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  document.getElementById('snipSentVal').dataset.orig=displaySent;
-  showPop(p,el);
-  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
-}
-
-// 語尾・NG用：書き換えプレビュー表示（ポップアップ内で切り替え）
-function snipSentEditGobi(e){
-  if(e)e.stopPropagation();
-  const ta=document.getElementById('snipSentVal');
-  if(!ta)return;
-  const to=ta.value.trim();
-  const origSent=ta.dataset.orig||'';
-  if(!to||to===origSent){return;}
-  const s=document.getElementById('srcEditor');
-  const src=s.value;
-  // 原文検索：1)そのまま 2)字下げ付き 3)フォールバック
-  let idx=src.indexOf(origSent);
-  let replaceLen=origSent.length;
-  if(idx<0){const ind='　'+origSent;const ii=src.indexOf(ind);if(ii>=0){idx=ii;replaceLen=ind.length;}}
-  if(idx<0){const found=resolveSrcSentence2(src,origSent);if(found){idx=found.start;replaceLen=found.text.length;}}
-  // 見つからなくてもプレビューは表示する（確定時に再検索）
-  const actualOrig=idx>=0?src.slice(idx,idx+replaceLen):origSent;
-  // ポップアップ内をプレビューに切り替え（タイトルは書き換え前に取得）
-  const p=document.getElementById('yPop');
-  const prevTitle=p.querySelector('.yure-popup-title')?.outerHTML||'';
-  let html=prevTitle;
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:4px">変更プレビュー：</div>';
-  html+='<div style="font-family:var(--font-mincho);font-size:12px;line-height:1.8;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;margin-bottom:6px;word-break:break-all">'
-    +'<span style="color:var(--text3);text-decoration:line-through">'+eH(actualOrig)+'</span><br>'
-    +'<span style="color:var(--primary-dark);font-weight:600">'+eH(to)+'</span>'
-    +'</div>';
-  html+='<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentCommit(event)"><span class="mi mi-xs">check</span>確定して書き換え</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="snipSentBack(event)"><span class="mi mi-xs">arrow_back</span>戻る</button>';
-  p.innerHTML=html;
-  // 確定に必要なデータをdata属性で保持
-  p.dataset.commitTo=to;
-  p.dataset.commitIdx=idx;
-  p.dataset.commitLen=replaceLen;
-  p.dataset.commitOrig=origSent;
-}
-// 書き換え確定
-function snipSentCommit(e){
-  if(e)e.stopPropagation();
-  const p=document.getElementById('yPop');
-  const to=p.dataset.commitTo||'';
-  let idx=+p.dataset.commitIdx;
-  let len=+p.dataset.commitLen;
-  const origSent=p.dataset.commitOrig||'';
-  const s=document.getElementById('srcEditor');
-  // idx<0のとき（完成版と原文が微妙に違う場合）確定時に再検索
-  if(idx<0&&origSent){
-    const src=s.value;
-    const ind='　'+origSent;
-    const ii=src.indexOf(ind);
-    if(ii>=0){idx=ii;len=ind.length;}
-    else{
-      const found=resolveSrcSentence2(src,origSent);
-      if(found){idx=found.start;len=found.text.length;}
-    }
-  }
-  if(idx<0){toast('文の位置が見つかりません。チェックを再実行してください');hPop();return;}
-  hPop();
-  s.value=s.value.slice(0,idx)+to+s.value.slice(idx+len);
-  upPrev();upCt();toast('文を書き換えました',true);runProof();
-}
-// 戻る → textareaに戻す
-function snipSentBack(e){
-  if(e)e.stopPropagation();
-  const p=document.getElementById('yPop');
-  const orig=p.dataset.commitOrig||'';
-  const edited=p.dataset.commitTo||'';
-  const prevTitle=p.querySelector('.yure-popup-title')?.outerHTML||'';
-  let html=prevTitle;
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
-    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(edited)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>'
-    +'<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  document.getElementById('snipSentVal').dataset.orig=orig;
-  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},50);
-}
-
-// NG本文ハイライトタップ → 語尾と同じ「文ごと書き換え」ポップアップ（該当箇所へボタンなし）
-function nPop(e,el){
-  e.stopPropagation();
-  const pos=+el.dataset.pos;
-  const word=el.dataset.w||el.textContent;
-  const p=document.getElementById('yPop');
-  const fmtText=fmt||document.getElementById('srcEditor').value;
-  const fBefore=fmtText.slice(Math.max(0,pos-60),pos);
-  const fAfter=fmtText.slice(pos+word.length,pos+word.length+60);
-  const fSentStart=Math.max(fBefore.lastIndexOf('。'),fBefore.lastIndexOf('\n'))+1;
-  const fSentEnd=fAfter.search(/[。\n]/);
-  const fmtSentence=fBefore.slice(fSentStart)+word+(fSentEnd>=0?fAfter.slice(0,fSentEnd+1):fAfter);
-  const displaySent=fmtSentence.replace(/^[　\s]+/,'');
-  const ctx='…'+eH(fmtText.slice(Math.max(0,pos-12),pos))+'<mark>'+eH(word)+'</mark>'+eH(fmtText.slice(pos+word.length,pos+word.length+12))+'…';
-  let html='<div class="yure-popup-title" style="font-family:var(--font-mincho);font-size:12px;margin-bottom:8px;line-height:1.8">'+ctx+'</div>';
-  html+='<div style="font-size:10px;color:var(--text3);margin-bottom:3px">文ごと書き換え：</div>'
-    +'<textarea id="snipSentVal" style="width:100%;font-family:var(--font-mincho);font-size:12px;line-height:1.7;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:vertical;min-height:64px;margin-bottom:6px;color:var(--text)">'+eH(displaySent)+'</textarea>'
-    +'<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:6px" onclick="snipSentEditGobi(event)"><span class="mi mi-xs">edit</span>この文を書き換え</button>';
-  html+='<button class="btn btn-secondary btn-sm" style="width:100%" onclick="hPop()"><span class="mi mi-xs">check</span>閉じる</button>';
-  p.innerHTML=html;
-  document.getElementById('snipSentVal').dataset.orig=displaySent;
-  showPop(p,el);
-  setTimeout(()=>{const ta=document.getElementById('snipSentVal');if(ta){ta.focus();}},80);
-}
-
-let _popActive=false;
-function showPop(p,el){
-  _lastPopEl=el; // キャンセル時の再表示用
-  _popActive=true;
-  p.style.display='block';p.style.left='0';p.style.top='-9999px';
-  requestAnimationFrame(()=>{
-    if(!_popActive)return; // hPopが先に呼ばれていたらキャンセル
-    const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph2=p.offsetHeight;
-    let left=r.left;
-    if(pw>=window.innerWidth-16){left=8;}
-    else{left=Math.min(r.left,window.innerWidth-pw-8);if(left<8)left=8;}
-    let top=r.bottom+8;
-    if(top+ph2>window.innerHeight-8)top=Math.max(8,r.top-ph2-8);
-    p.style.left=left+'px';p.style.top=top+'px';
-  });
-}
-function hPop(){_popActive=false;const p=document.getElementById('yPop');p.style.display='none';p.style.top='-9999px';}
-function repW(btn){
-  const from=btn.dataset.from,to=btn.dataset.to;hPop();
-  const s=document.getElementById('srcEditor');
-  // 全箇所を一括置換
-  const newVal=s.value.split(from).join(to);
-  if(newVal!==s.value){s.value=newVal;upPrev();upCt();toast('「'+from+'」→「'+to+'」（全件置換）');runProof();}
-}
-
-// Rules
-function rYure(){document.getElementById('yureList').innerHTML=yureRules.map((r,i)=>'<div class="rule-row"><input class="input-text" value="'+eH(r[0])+'" onchange="yureRules['+i+'][0]=this.value;sj(\'novelcraft_yure\',yureRules)"><span style="color:var(--text3);flex-shrink:0">↔</span><input class="input-text" value="'+eH(r[1])+'" onchange="yureRules['+i+'][1]=this.value;sj(\'novelcraft_yure\',yureRules)"><button class="btn-icon" onclick="yureRules.splice('+i+',1);rYure();sj(\'novelcraft_yure\',yureRules)"><span class="mi" style="font-size:14px">close</span></button></div>').join('');document.getElementById('yureCt').textContent=yureRules.length;}
-function addYure(){const a=document.getElementById('yA').value.trim(),b=document.getElementById('yB').value.trim();if(a&&b){yureRules.push([a,b]);document.getElementById('yA').value='';document.getElementById('yB').value='';rYure();sj('novelcraft_yure',yureRules);}}
-
-function rNg(){
-  document.getElementById('ngList').innerHTML=ngRules.map((r,i)=>{
-    const w=typeof r==='string'?r:(r.w||r);
-    return '<div class="rule-row"><input class="input-text" value="'+eH(w)+'" onchange="ngRules['+i+']=this.value;sj(\'novelcraft_ng\',ngRules)"><button class="btn-icon" onclick="ngRules.splice('+i+',1);rNg();sj(\'novelcraft_ng\',ngRules)"><span class="mi" style="font-size:14px">close</span></button></div>';
-  }).join('');
-  document.getElementById('ngCt').textContent=ngRules.length;
-}
-function addNg(){const w=document.getElementById('ngW').value.trim();if(w){ngRules.push(w);document.getElementById('ngW').value='';rNg();sj('novelcraft_ng',ngRules);}}
-
-function rRuby(){document.getElementById('rubyList').innerHTML=rubyRules.map((r,i)=>'<div class="rule-row"><input class="input-text" value="'+eH(r[0])+'" onchange="rubyRules['+i+'][0]=this.value;sj(\'novelcraft_ruby\',rubyRules);upPrev()"><span style="color:var(--text3);flex-shrink:0">→</span><input class="input-text" value="'+eH(r[1])+'" onchange="rubyRules['+i+'][1]=this.value;sj(\'novelcraft_ruby\',rubyRules);upPrev()"><button class="btn-icon" onclick="rubyRules.splice('+i+',1);rRuby();sj(\'novelcraft_ruby\',rubyRules);upPrev()"><span class="mi" style="font-size:14px">close</span></button></div>').join('');}
-function addRuby(){const k=document.getElementById('rubyK').value.trim(),r=document.getElementById('rubyR').value.trim();if(k&&r){rubyRules.push([k,r]);document.getElementById('rubyK').value='';document.getElementById('rubyR').value='';rRuby();sj('novelcraft_ruby',rubyRules);upPrev();}}
-function sj(k,v){localStorage.setItem(k,JSON.stringify(v));}
-
-// Split
-function setSM(m,b){splitMode=m;document.querySelectorAll('.split-mode-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('spCntF').style.display=m==='count'?'':'none';document.getElementById('spChrF').style.display=m==='chars'?'':'none';document.getElementById('spDlmF').style.display=m==='delim'?'':'none';}
-function endsDlg(t){const ls=t.split('\n');for(let i=ls.length-1;i>=0;i--){const l=ls[i].trim();if(!l)continue;return /^[「『]/.test(l)||/[」』]$/.test(l);}return false;}
-function runSplit(){
-  const t=fmt||document.getElementById('srcEditor').value;if(!t.trim()){toast('テキストがありません');return;}
-  let pts=[];
-  if(splitMode==='delim'){
-    const dlm=document.getElementById('spDlm').value;
-    if(!dlm.trim()){toast('区切り文字を入力してください');return;}
-    // 区切り文字を含む行全体を区切りとして扱う
-    const lines=t.split('\n');
-    const parts=[];let cur=[];
-    for(const line of lines){
-      if(line.trim()===dlm.trim()||line.includes(dlm)){
-        const joined=cur.join('\n');
-        if(joined.trim())parts.push(joined.replace(/^\n+|\n+$/g,''));
-        cur=[];
-      }else{cur.push(line);}
-    }
-    const last=cur.join('\n');
-    if(last.trim())parts.push(last.replace(/^\n+|\n+$/g,''));
-    pts=parts.length>=2?parts:[t];
-    if(parts.length<2){toast('区切り文字が見つかりませんでした');return;}
-  }else{
-  let sc;if(splitMode==='chars'){sc=Math.max(2,Math.ceil(t.length/(+document.getElementById('spChr').value||1500)));}else{sc=+document.getElementById('spCnt').value||2;}
-  const pa=t.split(/\n\n+/),tgt=Math.ceil(t.length/sc);let cur=[],cl=0;
-  for(let i=0;i<pa.length;i++){cur.push(pa[i]);cl+=pa[i].length;if(cl>=tgt&&pts.length<sc-1){const j=cur.join('\n\n');if(endsDlg(j)&&i+1<pa.length)continue;pts.push(j);cur=[];cl=0;}}
-  if(cur.length)pts.push(cur.join('\n\n'));
-  }
-  document.getElementById('spRes').innerHTML=pts.map((p,i)=>{
-    const H=300,T=200;let ph;
-    if(p.length<=H+T+50){ph='<pre>'+eH(p)+'</pre>';}
-    else{
-      // 先頭: 300字以降で最初の。まで
-      let headEnd=H;
-      const headSearch=p.indexOf('。',H);
-      if(headSearch>=0&&headSearch<H+100)headEnd=headSearch+1;
-      // 末尾: 末尾200字より前で最初の。から
-      let tailStart=p.length-T;
-      const tailSearch=p.lastIndexOf('。',tailStart);
-      if(tailSearch>=0&&tailSearch>p.length-T-100)tailStart=tailSearch+1;
-      const omit=tailStart-headEnd;
-      ph='<pre><span class="split-label">▼ 先頭</span>\n'+eH(p.slice(0,headEnd))+'</pre><div class="split-ellipsis">… 省略（'+omit.toLocaleString()+'字） …</div><pre><span class="split-label">▼ 末尾</span>\n'+eH(p.slice(tailStart))+'</pre>';
-    }
-    return '<div class="split-card"><div class="split-card-header"><h4>パート '+(i+1)+'/'+pts.length+'</h4><span>'+countChars(p).toLocaleString()+' 文字</span></div>'+ph+'<div class="btn-bar"><button class="btn btn-secondary btn-sm" onclick="cpSP('+i+')"><span class="mi mi-xs">content_copy</span>コピー</button><button class="btn btn-secondary btn-sm" onclick="exSP('+i+')"><span class="mi mi-xs">download</span>TXT</button></div></div>';
-  }).join('');
-  window._sp=pts;
-}
-function clearSplit(){document.getElementById('spRes').innerHTML='<p style="font-size:13px;color:var(--text3)">分割結果がここに表示されます。</p>';window._sp=[];toast('クリアしました');}
-function cpSP(i){
-  const text=window._sp?.[i];
-  if(!text){toast('コピー失敗：データがありません');return;}
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(()=>toast('パート'+(i+1)+'コピー')).catch(()=>cpFallback(text,'パート'+(i+1)+'コピー'));
-  }else{cpFallback(text,'パート'+(i+1)+'コピー');}
-}
-function cpFallback(text,msg){
-  const ta=document.createElement('textarea');
-  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
-  document.body.appendChild(ta);ta.focus();ta.select();
-  try{document.execCommand('copy');toast(msg);}catch(e){toast('コピーできませんでした');}
-  document.body.removeChild(ta);
-}
-function exSP(i){if(window._sp?.[i])dl(window._sp[i],'part'+(i+1)+'.txt');}
-
-function clearProof(){const s=document.getElementById('proofSum'),t=document.getElementById('proofText'),ph=document.getElementById('proofPlaceholder');if(s){s.style.display='none';s.innerHTML='';}if(t){t.style.display='none';t.innerHTML='';}if(ph)ph.style.display='block';issues=[];ignored=new Set();toast('チェック結果をクリアしました');}
-function clearSrc(){if(!document.getElementById('srcEditor').value.trim()){return;}if(!confirm('エディタの内容をクリアしますか？')){return;}document.getElementById('srcEditor').value='';upPrev();upCt();toast('クリアしました');}
-function doSave(){localStorage.setItem('novelcraft_src',document.getElementById('srcEditor').value);toast('保存しました');}
-function expTxt(m){
-  const now=new Date();
-  const pad=n=>String(n).padStart(2,'0');
-  const stamp=String(now.getFullYear())+pad(now.getMonth()+1)+pad(now.getDate())+'_'+pad(now.getHours())+pad(now.getMinutes());
-  dl(m==='src'?document.getElementById('srcEditor').value:fmt, stamp+'_novel.txt');
-}
-function dl(t,f){const b=new Blob([t],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f;a.click();URL.revokeObjectURL(a.href);toast(f);}
-function loadF(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{document.getElementById('srcEditor').value=ev.target.result;upPrev();upCt();toast(f.name);};r.readAsText(f);e.target.value='';}
-function cpOut(){navigator.clipboard.writeText(fmt);toast('コピー');}
-
-function eH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function eR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
-let _confCallback=null,_lastPopEl=null,_savedPopHTML=null,_savedPopOrig=null,_savedPopInput=null;
-function showConfirm(msg,preview,cb,savedHTML,savedOrig,savedInput){
-  document.getElementById('confMsg').textContent=msg;
-  document.getElementById('confPrev').innerHTML=preview;
-  _confCallback=cb;
-  _savedPopHTML=savedHTML||null;
-  _savedPopOrig=savedOrig!==undefined?savedOrig:null;
-  _savedPopInput=savedInput!==undefined?savedInput:null;
-  document.getElementById('confOvl').classList.add('show');
-}
-function confOk(){
-  document.getElementById('confOvl').classList.remove('show');
-  if(_confCallback){_confCallback();_confCallback=null;}
-  _lastPopEl=null;_savedPopHTML=null;_savedPopOrig=null;_savedPopInput=null;
-}
-function confCancel(){
-  document.getElementById('confOvl').classList.remove('show');
-  _confCallback=null;
-  const html=_savedPopHTML, el=_lastPopEl, orig=_savedPopOrig, inputVal=_savedPopInput;
-  _savedPopHTML=null;_lastPopEl=null;_savedPopOrig=null;_savedPopInput=null;
-  if(html&&el){
-    const p=document.getElementById('yPop');
-    p.innerHTML=html;
-    // data-origと入力値を復元
-    const ta=document.getElementById('snipSentVal');
-    const inp=document.getElementById('snipEditVal');
-    if(ta){
-      if(orig!==null)ta.dataset.orig=orig;
-      if(inputVal!==null)ta.value=inputVal;
-    } else if(inp&&inputVal!==null){
-      inp.value=inputVal;
-    }
-    _popActive=true;
-    p.style.display='block';p.style.left='0';p.style.top='-9999px';
-    requestAnimationFrame(()=>{
-      const r=el.getBoundingClientRect(),pw=p.offsetWidth,ph=p.offsetHeight;
-      let left=pw>=window.innerWidth-16?8:Math.max(8,Math.min(r.left,window.innerWidth-pw-8));
-      let top=r.bottom+8;
-      if(top+ph>window.innerHeight-8)top=Math.max(8,r.top-ph-8);
-      p.style.left=left+'px';p.style.top=top+'px';
-    });
-    setTimeout(()=>{
-      const ta2=document.getElementById('snipSentVal');
-      const inp2=document.getElementById('snipEditVal');
-      if(ta2){ta2.focus();ta2.setSelectionRange(ta2.value.length,ta2.value.length);}
-      else if(inp2){inp2.focus();inp2.select();}
-    },80);
-  }
-}
-function toast(m,showProofBtn){
-  const e=document.getElementById('toast');
-  const onProof=document.getElementById('panel-proofread')?.classList.contains('active');
-  let html='<div class="toast-row"><span class="mi">check_circle</span><span>'+m+'</span></div>';
-  if(showProofBtn&&!onProof){html+='<button onclick="goProof()" style="width:100%;background:#fff;border:none;color:var(--primary-dark);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Hiragino Sans\',sans-serif">チェック結果へ →</button>';}
-  e.innerHTML=html;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),4500);
-}
-function goProof(){
-  document.getElementById('toast').classList.remove('show');
-  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
-  document.querySelector('[data-tab="proofread"]').classList.add('active');
-  document.getElementById('panel-proofread').classList.add('active');
-  document.getElementById('proofSum').scrollIntoView({behavior:'smooth',block:'start'});
-}
-</script>
 </body>
 </html>
