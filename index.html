@@ -3,159 +3,1105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#e87b6b">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="quill-note">
-<title>quill-note</title>
+<title>描写の引き出し</title>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --primary: #e87b6b;
-    --primary-dark: #c9584a;
-    --primary-light: #f5a99e;
-    --primary-pale: #fdf0ee;
-    --bg: #fef8f7;
-    --surface: #ffffff;
-    --surface2: #fdf3f2;
-    --border: #f0d5d1;
-    --text: #4a2525;
-    --text2: #7a4545;
-    --text3: #aa7777;
-    --shadow: rgba(232,123,107,0.15);
+    --coral: #E8826A;
+    --coral-light: #F2A894;
+    --coral-pale: #FDF0EC;
+    --ink: #2C2018;
+    --ink-mid: #6B5344;
+    --ink-light: #A8907E;
+    --cream: #FAF6F2;
+    --white: #FFFFFF;
+    --shadow: rgba(44,32,24,0.10);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    background: var(--cream);
+    color: var(--ink);
     min-height: 100vh;
   }
 
   /* ヘッダー */
-  .header {
-    background: var(--surface);
-    padding: 14px 16px 12px;
+  header {
+    background: var(--white);
+    border-bottom: 2px solid var(--coral-pale);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 8px var(--shadow);
+    box-shadow: 0 2px 12px var(--shadow);
   }
 
-  .header h1 {
-    font-size: 20px;
-    color: var(--primary);
-    font-weight: 700;
-    letter-spacing: 0.05em;
+  .logo {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 0.1em;
   }
 
-  .header-sub {
-    font-size: 11px;
-    color: var(--text3);
-    margin-top: 2px;
+  /* タブナビ */
+  nav {
+    display: flex;
+    gap: 2px;
   }
 
-  /* カードリスト */
-  .card-list {
-    padding: 14px 16px;
+  nav button {
+    width: 52px;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--ink-light);
     display: flex;
     flex-direction: column;
-    gap: 10px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: 0 2px 6px var(--shadow);
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    transition: box-shadow 0.2s;
-    color: inherit;
-  }
-
-  .card:hover {
-    box-shadow: 0 4px 12px var(--shadow);
-  }
-
-  .card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: var(--primary-pale);
-    display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    gap: 2px;
   }
 
-  .card-icon .material-icons-round {
+  nav button.active {
+    background: var(--coral);
+    color: white;
+    border-radius: 10px;
+  }
+
+  nav button:hover:not(.active) {
+    background: var(--coral-pale);
+    color: var(--coral);
+  }
+
+  /* メインコンテナ */
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* セクション切り替え */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ========== 検索セクション ========== */
+  .search-hero {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .search-hero h2 {
+    font-family: 'BIZ UDPGothic', sans-serif;
     font-size: 22px;
-    color: var(--primary);
+    color: var(--ink);
+    margin-bottom: 6px;
   }
 
-  .card-body {
+  .search-hero p {
+    font-size: 13px;
+    color: var(--ink-light);
+    line-height: 1.7;
+  }
+
+  .search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .search-box input {
     flex: 1;
-    min-width: 0;
+    padding: 12px 16px;
+    border: 2px solid var(--coral-pale);
+    border-radius: 12px;
+    font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+    font-size: 15px;
+    background: white;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
   }
 
-  .card-name {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 3px;
+  .search-box input:focus {
+    border-color: var(--coral-light);
   }
 
-  .card-desc {
+  .search-box input::placeholder {
+    color: var(--ink-light);
+  }
+
+  .btn-primary {
+    padding: 12px 20px;
+    background: var(--coral);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-primary:hover {
+    background: #d4705a;
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* カテゴリチップ */
+  .category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .chip {
+    padding: 6px 14px;
+    border: 1.5px solid var(--coral-light);
+    border-radius: 20px;
     font-size: 12px;
-    color: var(--text3);
-    line-height: 1.5;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: white;
+    color: var(--ink-mid);
   }
 
-  .card-arrow {
-    color: var(--border);
-    font-size: 22px;
-    flex-shrink: 0;
+  .chip.selected {
+    background: var(--coral);
+    border-color: var(--coral);
+    color: white;
   }
 
+  .chip:hover:not(.selected) {
+    background: var(--coral-pale);
+  }
 
+  /* 結果カード */
+  .results-area {
+    min-height: 200px;
+  }
+
+  .result-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px var(--shadow);
+    animation: fadeUp 0.3s ease both;
+    position: relative;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card .cat-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    background: var(--coral-pale);
+    color: var(--coral);
+    border-radius: 10px;
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+
+  .result-card .before {
+    font-size: 13px;
+    color: var(--ink-light);
+    margin-bottom: 6px;
+  }
+
+  .result-card .before span {
+    background: #f0ebe6;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: 'BIZ UDPGothic', sans-serif;
+  }
+
+  .result-card .arrow {
+    color: var(--coral-light);
+    margin: 0 6px;
+  }
+
+  .result-card .after {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .result-card .memo {
+    font-size: 12px;
+    color: var(--ink-light);
+    border-top: 1px solid var(--coral-pale);
+    padding-top: 10px;
+    line-height: 1.6;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+
+  .btn-save {
+    padding: 5px 14px;
+    border: 1.5px solid var(--coral-light);
+    border-radius: 20px;
+    background: white;
+    color: var(--coral);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-save:hover {
+    background: var(--coral);
+    color: white;
+  }
+
+  .btn-save.saved {
+    background: var(--coral-pale);
+    color: var(--coral);
+    border-color: var(--coral-pale);
+    cursor: default;
+  }
+
+  /* ローディング */
+  .loading {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--ink-light);
+  }
+
+  .loading-dots {
+    display: inline-flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .loading-dots span {
+    width: 8px;
+    height: 8px;
+    background: var(--coral-light);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--ink-light);
+  }
+
+  .empty-state .icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ========== トレーニングセクション ========== */
+  .training-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px 28px;
+    box-shadow: 0 2px 10px var(--shadow);
+    margin-bottom: 24px;
+  }
+
+  .training-card h3 {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 14px;
+    color: var(--coral);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .odai-box {
+    background: var(--coral-pale);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .odai-box .odai-label {
+    font-size: 11px;
+    color: var(--ink-light);
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .odai-box .odai-text {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .odai-box .odai-hint {
+    font-size: 12px;
+    color: var(--ink-mid);
+    line-height: 1.6;
+  }
+
+  .training-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 14px 16px;
+    border: 2px solid var(--coral-pale);
+    border-radius: 12px;
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--ink);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--cream);
+  }
+
+  .training-textarea:focus {
+    border-color: var(--coral-light);
+    background: white;
+  }
+
+  .training-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+
+  .btn-secondary {
+    padding: 10px 18px;
+    border: 1.5px solid var(--coral-light);
+    border-radius: 10px;
+    background: white;
+    color: var(--coral);
+    font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover {
+    background: var(--coral-pale);
+  }
+
+  /* お題カテゴリ選択 */
+  .odai-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  /* ========== マイ辞典セクション ========== */
+  .dict-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .dict-header h2 {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 20px;
+  }
+
+  .dict-count {
+    font-size: 13px;
+    color: var(--ink-light);
+  }
+
+  .dict-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .dict-tab {
+    padding: 6px 16px;
+    border: 1.5px solid var(--coral-pale);
+    border-radius: 20px;
+    background: white;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--ink-mid);
+    transition: all 0.15s;
+  }
+
+  .dict-tab.active {
+    background: var(--coral-pale);
+    border-color: var(--coral-light);
+    color: var(--coral);
+  }
+
+  .dict-item {
+    background: white;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 6px var(--shadow);
+    animation: fadeUp 0.25s ease both;
+    position: relative;
+  }
+
+  .dict-item .item-type {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .dict-item .item-type.saved {
+    background: #EAF4E8;
+    color: #4A8C43;
+  }
+
+  .dict-item .item-type.mywork {
+    background: #EAE8F4;
+    color: #5B4A8C;
+  }
+
+  .dict-item .item-text {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .dict-item .item-meta {
+    font-size: 11px;
+    color: var(--ink-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-delete {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    transition: color 0.15s;
+  }
+
+  .btn-delete:hover { color: #E8826A; }
+
+  /* フィードバックオーバーレイ */
+  .feedback-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(44,32,24,0.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feedback-overlay.open {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .feedback-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    max-width: 520px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(44,32,24,0.2);
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .feedback-modal h3 {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 16px;
+    color: var(--coral);
+    margin-bottom: 16px;
+  }
+
+  .feedback-modal .your-text {
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--ink-mid);
+    margin-bottom: 16px;
+  }
+
+  .feedback-modal .fb-content {
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+
+  .feedback-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* トースト */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    transition: transform 0.3s ease;
+    z-index: 300;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ストリーキング */
+  .streak-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 6px var(--shadow);
+  }
+
+  .streak-icon { font-size: 22px; }
+
+  .streak-info { flex: 1; }
+
+  .streak-info .streak-label {
+    font-size: 11px;
+    color: var(--ink-light);
+    margin-bottom: 2px;
+  }
+
+  .streak-info .streak-count {
+    font-family: 'BIZ UDPGothic', sans-serif;
+    font-size: 18px;
+    color: var(--coral);
+    font-weight: 600;
+  }
+
+  .streak-info .streak-count span {
+    font-size: 13px;
+    color: var(--ink-mid);
+  }
+
+  @media (max-width: 480px) {
+    header { padding: 0 16px; }
+    main { padding: 24px 16px 80px; }
+    .training-card { padding: 20px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>quill-note</h1>
-  <div class="header-sub">創作サポートツール</div>
+<header>
+  <div class="logo">描写の引き出し</div>
+  <nav>
+    <button class="active" onclick="showSection('search', this)"><span class="material-icons-round" style="font-size:18px">search</span><span>検索</span></button>
+    <button onclick="showSection('training', this)"><span class="material-icons-round" style="font-size:18px">edit</span><span>練習</span></button>
+    <button onclick="showSection('dict', this)"><span class="material-icons-round" style="font-size:18px">menu_book</span><span>辞典</span></button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ========== 検索 ========== -->
+  <section id="search" class="section active">
+    <div class="search-hero">
+      <h2>表現を探す</h2>
+      <p>単語・感情・場面を入れて、新しい描写の引き出しを開こう</p>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="例：恥ずかしい、手が触れる、夕暮れ…" maxlength="50">
+      <button class="btn-primary" id="searchBtn" onclick="doSearch()">検索</button>
+    </div>
+
+    <div class="category-chips">
+      <div class="chip selected" data-cat="all" onclick="selectCat(this)">すべて</div>
+      <div class="chip" data-cat="emotion" onclick="selectCat(this)">感情・心理</div>
+      <div class="chip" data-cat="sense" onclick="selectCat(this)">五感・情景</div>
+      <div class="chip" data-cat="body" onclick="selectCat(this)">身体・動作</div>
+      <div class="chip" data-cat="dialog" onclick="selectCat(this)">セリフ・会話</div>
+    </div>
+
+    <div class="results-area" id="resultsArea">
+      <div class="empty-state">
+        <div class="icon"><span class="material-icons-round" style="font-size:40px;color:var(--coral-light)">auto_fix_high</span></div>
+        <p>キーワードを入れて検索してみてください<br>BL・青春向けの表現をAIが提案します</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 練習 ========== -->
+  <section id="training" class="section">
+    <div class="streak-bar">
+      <div class="streak-icon"><span class="material-icons-round" style="font-size:24px;color:var(--coral)">local_fire_department</span></div>
+      <div class="streak-info">
+        <div class="streak-label">練習の積み重ね</div>
+        <div class="streak-count" id="practiceCount">0<span> 回</span></div>
+      </div>
+      <div style="font-size:12px;color:var(--ink-light);text-align:right;">今日も一つ<br>書いてみよう</div>
+    </div>
+
+    <div class="training-card">
+      <h3><span class="material-icons-round" style="font-size:16px;vertical-align:-3px;color:var(--coral)">list_alt</span> お題のカテゴリ</h3>
+      <div class="odai-categories">
+        <div class="chip selected" data-odai="all" onclick="selectOdaiCat(this)">ランダム</div>
+        <div class="chip" data-odai="emotion" onclick="selectOdaiCat(this)">感情・心理</div>
+        <div class="chip" data-odai="sense" onclick="selectOdaiCat(this)">五感・情景</div>
+        <div class="chip" data-odai="body" onclick="selectOdaiCat(this)">身体・動作</div>
+      </div>
+
+      <div class="odai-box" id="odaiBox">
+        <div class="odai-label">今日のお題</div>
+        <div class="odai-text" id="odaiText">読み込み中…</div>
+        <div class="odai-hint" id="odaiHint"></div>
+      </div>
+
+      <textarea class="training-textarea" id="trainingText" placeholder="ここに描写を書いてみよう。短い一文でもOK。"></textarea>
+
+      <div class="training-actions">
+        <button class="btn-secondary" onclick="newOdai()">次のお題</button>
+        <button class="btn-secondary" onclick="getFeedback()">AIフィードバック</button>
+        <button class="btn-primary" onclick="saveTraining()">辞典に保存</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== マイ辞典 ========== -->
+  <section id="dict" class="section">
+    <div class="dict-header">
+      <h2 style="font-family:'Shippori Mincho',serif;">マイ辞典</h2>
+      <div class="dict-count" id="dictCount">0 件</div>
+    </div>
+
+    <div class="dict-tabs">
+      <button class="dict-tab active" onclick="showDictTab('all', this)">すべて</button>
+      <button class="dict-tab" onclick="showDictTab('saved', this)">保存した表現</button>
+      <button class="dict-tab" onclick="showDictTab('mywork', this)">自分の練習</button>
+    </div>
+
+    <div id="dictList"></div>
+  </section>
+
+</main>
+
+<!-- フィードバックモーダル -->
+<div class="feedback-overlay" id="fbOverlay" onclick="closeFeedback(event)">
+  <div class="feedback-modal" id="fbModal">
+    <h3><span class="material-icons-round" style="font-size:16px;vertical-align:-3px;color:var(--coral)">tips_and_updates</span> AIフィードバック</h3>
+    <div class="your-text" id="fbYourText"></div>
+    <div class="loading" id="fbLoading" style="display:none">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+      <p style="font-size:13px">読んでいます…</p>
+    </div>
+    <div class="fb-content" id="fbContent"></div>
+    <div class="feedback-actions">
+      <button class="btn-secondary" onclick="saveAndClose()">練習を保存して閉じる</button>
+      <button class="btn-primary" onclick="closeFeedbackBtn()">閉じる</button>
+    </div>
+  </div>
 </div>
 
-<div class="card-list">
-  <a class="card" href="./novel-craft/">
-    <div class="card-icon">
-      <span class="material-icons-round">edit_note</span>
-    </div>
-    <div class="card-body">
-      <div class="card-name">執筆補助</div>
-      <div class="card-desc">書式整形・推敲チェック・投稿用分割</div>
-    </div>
-    <span class="material-icons-round card-arrow">chevron_right</span>
-  </a>
+<div class="toast" id="toast"></div>
 
-  <a class="card" href="./byosha-hikidashi/">
-    <div class="card-icon">
-      <span class="material-icons-round">auto_fix_high</span>
-    </div>
-    <div class="card-body">
-      <div class="card-name">描写の引き出し</div>
-      <div class="card-desc">表現検索・描写練習・マイ辞典</div>
-    </div>
-    <span class="material-icons-round card-arrow">chevron_right</span>
-  </a>
-</div>
+<script>
+  // ===== 状態 =====
+  let selectedCat = 'all';
+  let selectedOdaiCat = 'all';
+  let currentOdai = null;
+  let dictionary = JSON.parse(localStorage.getItem('byosha_dict') || '[]');
+  let practiceCount = parseInt(localStorage.getItem('byosha_count') || '0');
+  let currentFeedbackText = '';
+  let currentFeedbackOdai = '';
+  let dictTab = 'all';
 
+  // ===== カテゴリ =====
+  const catLabels = {
+    all: 'すべて',
+    emotion: '感情・心理',
+    sense: '五感・情景',
+    body: '身体・動作',
+    dialog: 'セリフ・会話'
+  };
+
+  // ===== お題プール =====
+  const odaiPool = {
+    emotion: [
+      { text: '好きだと気づいた瞬間', hint: '心臓の動き、呼吸、視線の変化で表してみて' },
+      { text: '泣きたいのに泣けない', hint: '喉や目の感覚、こらえる体の反応を探してみて' },
+      { text: '嫉妬しているのを隠している', hint: '行動や言葉の端々に滲ませるのがポイント' },
+      { text: '怒りが静かに冷えていく', hint: '熱が引く感覚を体の変化で描いてみて' },
+      { text: '距離が縮まった安心感', hint: '緊張がほどける瞬間、体の力が抜ける描写を' },
+    ],
+    sense: [
+      { text: '雨の日の教室', hint: '音・におい・光の屈折、静けさの質感まで' },
+      { text: '真夏の帰り道', hint: 'アスファルトの熱、空気の重さ、日差しの角度' },
+      { text: '深夜のコンビニ', hint: '蛍光灯の色、冷気、音の少なさを五感で' },
+      { text: '誰かの部屋のにおい', hint: 'においは記憶と直結する。具体的な何かから' },
+      { text: '冬の朝、息が白い', hint: '寒さの質感、白い息の輪郭、静けさ' },
+    ],
+    body: [
+      { text: '手が偶然触れた', hint: '触覚の細部、その後の沈黙や動きに注目' },
+      { text: '目が合って逸らした', hint: '逸らす速度、その後の視線の行方' },
+      { text: '肩が並んで歩く', hint: '距離感、歩幅、腕が当たりそうな緊張感' },
+      { text: '名前を呼ぶ声', hint: '声の質感、呼吸のタイミング、抑揚' },
+      { text: '笑顔を作る', hint: '自然な笑いと作り笑いの体の違いを' },
+    ],
+  };
+
+  function getAllOdai() {
+    return [...odaiPool.emotion, ...odaiPool.sense, ...odaiPool.body];
+  }
+
+  // ===== 初期化 =====
+  document.getElementById('practiceCount').innerHTML = practiceCount + '<span> 回</span>';
+  newOdai();
+  renderDict();
+
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  // ===== セクション切り替え =====
+  function showSection(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    if (id === 'dict') renderDict();
+  }
+
+  // ===== カテゴリ選択 =====
+  function selectCat(el) {
+    document.querySelectorAll('.category-chips .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCat = el.dataset.cat;
+  }
+
+  function selectOdaiCat(el) {
+    document.querySelectorAll('.odai-categories .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedOdaiCat = el.dataset.odai;
+    newOdai();
+  }
+
+  // ===== お題 =====
+  function newOdai() {
+    const pool = selectedOdaiCat === 'all' ? getAllOdai() : (odaiPool[selectedOdaiCat] || getAllOdai());
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    currentOdai = item;
+    document.getElementById('odaiText').textContent = item.text;
+    document.getElementById('odaiHint').textContent = item.hint;
+    document.getElementById('trainingText').value = '';
+  }
+
+  // ===== 検索 =====
+  async function doSearch() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (!q) return;
+    const btn = document.getElementById('searchBtn');
+    const area = document.getElementById('resultsArea');
+    btn.disabled = true;
+    area.innerHTML = `<div class="loading"><div class="loading-dots"><span></span><span></span><span></span></div><p style="font-size:13px;color:var(--ink-light)">表現を探しています…</p></div>`;
+
+    const catStr = selectedCat === 'all' ? 'すべてのカテゴリ' : catLabels[selectedCat];
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `あなたはBL・青春小説の描写表現を提案する辞典AIです。
+ユーザーが入力したキーワードに対して、JSON形式で表現を3つ提案してください。
+カテゴリ指定がある場合はそのカテゴリに絞ってください。
+
+必ず以下のJSON配列のみを返してください。前後に説明文を加えないこと。
+
+[
+  {
+    "category": "カテゴリ名（感情・心理 / 五感・情景 / 身体・動作 / セリフ・会話 のいずれか）",
+    "before": "元の表現（5〜10文字程度）",
+    "after": "言い換えた表現（30〜60文字の地の文。詩的で具体的に）",
+    "memo": "なぜこの表現が効果的か、使いどころのメモ（40文字以内）"
+  }
+]
+
+注意：
+- BL・青春ジャンルに合わせた繊細でリアルな表現を選ぶ
+- afterは地の文として自然に使える形で
+- JSON以外の文字を出力しない`,
+          messages: [{ role: 'user', content: `キーワード：「${q}」\nカテゴリ：${catStr}` }]
+        })
+      });
+
+      const data = await resp.json();
+      const text = data.content[0].text.trim();
+      const clean = text.replace(/```json|```/g, '').trim();
+      const items = JSON.parse(clean);
+      renderResults(items, q);
+    } catch(e) {
+      area.innerHTML = `<div class="empty-state"><div class="icon"><span class="material-icons-round" style="font-size:40px;color:var(--coral-light)">error_outline</span></div><p>うまく取得できませんでした。<br>もう一度試してみてください。</p></div>`;
+    }
+    btn.disabled = false;
+  }
+
+  function renderResults(items, q) {
+    const area = document.getElementById('resultsArea');
+    if (!items.length) {
+      area.innerHTML = `<div class="empty-state"><div class="icon"><span class="material-icons-round" style="font-size:40px;color:var(--coral-light)">search_off</span></div><p>表現が見つかりませんでした。<br>別のキーワードで試してみて。</p></div>`;
+      return;
+    }
+    area.innerHTML = items.map((item, i) => `
+      <div class="result-card" style="animation-delay:${i*0.08}s">
+        <div class="cat-badge">${item.category}</div>
+        <div class="before"><span>${escHtml(item.before)}</span><span class="arrow">→</span></div>
+        <div class="after">${escHtml(item.after)}</div>
+        <div class="memo">${escHtml(item.memo)}</div>
+        <div class="card-actions">
+          <button class="btn-save" onclick="saveFromSearch(this, '${escAttr(item.after)}', '${escAttr(item.category)}', '${escAttr(q)}')">辞典に保存</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ===== 保存（検索から） =====
+  function saveFromSearch(btn, text, cat, keyword) {
+    if (btn.classList.contains('saved')) return;
+    addToDict({ type: 'saved', text, cat, keyword, date: today() });
+    btn.textContent = '保存済み';
+    btn.classList.add('saved');
+    showToast('辞典に保存しました');
+  }
+
+  // ===== フィードバック =====
+  async function getFeedback() {
+    const text = document.getElementById('trainingText').value.trim();
+    if (!text) { showToast('まず何か書いてみてね'); return; }
+    currentFeedbackText = text;
+    currentFeedbackOdai = currentOdai ? currentOdai.text : '';
+
+    document.getElementById('fbYourText').textContent = text;
+    document.getElementById('fbContent').innerHTML = '';
+    document.getElementById('fbLoading').style.display = 'block';
+    document.getElementById('fbOverlay').classList.add('open');
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `あなたはBL・青春小説の描写練習をサポートするコーチです。
+書き手が書いた描写に対して、温かく的確なフィードバックをしてください。
+
+【フォーマット】
+良い点：（1〜2点、具体的に）
+気になる点：（1点のみ。あれば）
+一言アドバイス：（次に活かせるヒント、1文で）
+
+文章例や修正案は書かないこと。方向性のヒントのみ伝える。
+全体で150文字以内で簡潔に。`,
+          messages: [{ role: 'user', content: `お題：「${currentFeedbackOdai}」\n\n描写：\n${text}` }]
+        })
+      });
+      const data = await resp.json();
+      document.getElementById('fbLoading').style.display = 'none';
+      document.getElementById('fbContent').innerHTML = data.content[0].text.replace(/\n/g, '<br>');
+    } catch(e) {
+      document.getElementById('fbLoading').style.display = 'none';
+      document.getElementById('fbContent').innerHTML = 'フィードバックを取得できませんでした。';
+    }
+  }
+
+  function closeFeedback(e) {
+    if (e.target === document.getElementById('fbOverlay')) closeFeedbackBtn();
+  }
+
+  function closeFeedbackBtn() {
+    document.getElementById('fbOverlay').classList.remove('open');
+  }
+
+  function saveAndClose() {
+    if (currentFeedbackText) {
+      addToDict({
+        type: 'mywork',
+        text: currentFeedbackText,
+        odai: currentFeedbackOdai,
+        date: today()
+      });
+      incrementPractice();
+      showToast('辞典に保存しました');
+    }
+    closeFeedbackBtn();
+  }
+
+  // ===== 練習保存（フィードバックなしで） =====
+  function saveTraining() {
+    const text = document.getElementById('trainingText').value.trim();
+    if (!text) { showToast('まず何か書いてみてね'); return; }
+    addToDict({
+      type: 'mywork',
+      text,
+      odai: currentOdai ? currentOdai.text : '',
+      date: today()
+    });
+    incrementPractice();
+    document.getElementById('trainingText').value = '';
+    showToast('保存しました！続けてみよう');
+    newOdai();
+  }
+
+  function incrementPractice() {
+    practiceCount++;
+    localStorage.setItem('byosha_count', practiceCount);
+    document.getElementById('practiceCount').innerHTML = practiceCount + '<span> 回</span>';
+  }
+
+  // ===== 辞典 =====
+
+  function addToDict(item) {
+    item.id = Date.now();
+    dictionary.unshift(item);
+    localStorage.setItem('byosha_dict', JSON.stringify(dictionary));
+  }
+
+  function showDictTab(tab, btn) {
+    document.querySelectorAll('.dict-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    dictTab = tab;
+    renderDict();
+  }
+
+  function renderDict() {
+    const list = document.getElementById('dictList');
+    let items = dictionary;
+    if (dictTab === 'saved') items = dictionary.filter(i => i.type === 'saved');
+    if (dictTab === 'mywork') items = dictionary.filter(i => i.type === 'mywork');
+
+    document.getElementById('dictCount').textContent = items.length + ' 件';
+
+    if (!items.length) {
+      list.innerHTML = `<div class="empty-state"><div class="icon"><span class="material-icons-round" style="font-size:40px;color:var(--coral-light)">inbox</span></div><p>まだ何も保存されていません<br>検索や練習から保存してみてください</p></div>`;
+      return;
+    }
+
+    list.innerHTML = items.map(item => `
+      <div class="dict-item" id="di-${item.id}">
+        <div>
+          <span class="item-type ${item.type}">${item.type === 'saved' ? '保存した表現' : '自分の練習'}</span>
+          ${item.type === 'saved' && item.cat ? `<span style="font-size:10px;color:var(--ink-light);margin-left:6px">${escHtml(item.cat)}</span>` : ''}
+          ${item.type === 'mywork' && item.odai ? `<span style="font-size:10px;color:var(--ink-light);margin-left:6px">お題：${escHtml(item.odai)}</span>` : ''}
+        </div>
+        <div class="item-text">${escHtml(item.text)}</div>
+        <div class="item-meta">
+          <span>${item.date}</span>
+          <button class="btn-delete" onclick="deleteItem(${item.id})">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function deleteItem(id) {
+    dictionary = dictionary.filter(i => i.id !== id);
+    localStorage.setItem('byosha_dict', JSON.stringify(dictionary));
+    renderDict();
+  }
+
+  // ===== ユーティリティ =====
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function escAttr(str) {
+    return String(str).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  }
+</script>
 </body>
 </html>
